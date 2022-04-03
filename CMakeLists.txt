@@ -194,3 +194,7 @@ if(NOT EMU_COPYRIGHT_YEAR)
 endif()
 
 add_subdirectory(src)
+
+find_package(Corrosion REQUIRED)
+corrosion_import_crate(MANIFEST_PATH ${CMAKE_SOURCE_DIR}/rustsrc/Cargo.toml)
+target_link_libraries(86Box rust)
