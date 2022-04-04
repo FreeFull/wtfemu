@@ -1,3 +1,7 @@
+WTFEmu
+======
+This is an experimental fork of 86Box. WTFEmu makes no guarantees about stability, performance, or functionality. For regular x86 emulation needs, I recommend using upstream [86Box](https://86box.net/).
+
 86Box [![Build Status](http://ci.86box.net/job/86Box/badge/icon)](http://ci.86box.net/job/86Box)
 =====
 **86Box** is a low level x86 emulator that runs older operating systems and software designed for IBM PC systems and compatibles from 1981 through fairly recent system designs based on the PCI bus.
