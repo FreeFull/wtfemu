@@ -137,12 +137,8 @@ main_thread_fn()
 
     is_quit = 1;
 }
-extern "C" {
-void rusttest(void);
-}
+
 int main(int argc, char* argv[]) {
-    rusttest();
-    return 0;
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QApplication::setAttribute(Qt::AA_DisableHighDpiScaling, false);
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);

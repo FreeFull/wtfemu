@@ -1,6 +1,5 @@
-use libc::*;
+pub mod network;
 
-#[no_mangle]
-pub unsafe extern "C" fn rusttest() {
-    puts(b"Hello from Rust!".as_ptr() as *const _);
-}
+pub mod device;
+pub mod thread;
+pub mod timer;
