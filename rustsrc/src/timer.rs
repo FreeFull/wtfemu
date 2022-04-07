@@ -21,7 +21,7 @@ pub struct pc_timer_t {
     period: f64, /* This is used for large period timers to count
                  the microseconds and split the period. */
 
-    callback: extern "C" fn(p: *mut c_void),
+    callback: Option<extern "C" fn(p: *mut c_void)>,
     p: *mut c_void,
 
     prev: *mut pc_timer_t,
@@ -30,4 +30,11 @@ pub struct pc_timer_t {
 
 extern "C" {
     pub fn timer_on_auto(timer: *mut pc_timer_t, period: f64);
+    pub fn timer_add(
+        timer: *mut pc_timer_t,
+        callback: unsafe extern "C" fn(p: *mut c_void),
+        p: *mut c_void,
+        start_timer: c_int,
+    );
+    pub fn timer_stop(timer: *mut pc_timer_t);
 }

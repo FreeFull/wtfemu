@@ -72,21 +72,21 @@ pub union device_t_union {
 
 #[repr(C)]
 pub struct device_t {
-    name: *const c_char,
-    internal_name: *const c_char,
-    flags: u32, /* system flags */
-    local: u32, /* flags local to device */
+    pub name: *const c_char,
+    pub internal_name: *const c_char,
+    pub flags: u32, /* system flags */
+    pub local: u32, /* flags local to device */
 
-    init: extern "C" fn(*const device_t) -> *mut c_void,
-    close: extern "C" fn(r#priv: *mut c_void),
-    reset: extern "C" fn(r#priv: *mut c_void),
+    pub init: extern "C" fn(*const device_t) -> *mut c_void,
+    pub close: extern "C" fn(r#priv: *mut c_void),
+    pub reset: extern "C" fn(r#priv: *mut c_void),
 
-    device_t_union: device_t_union,
+    pub device_t_union: device_t_union,
 
-    speed_changed: extern "C" fn(r#priv: *mut c_void),
-    force_redraw: extern "C" fn(r#priv: *mut c_void),
+    pub speed_changed: extern "C" fn(r#priv: *mut c_void),
+    pub force_redraw: extern "C" fn(r#priv: *mut c_void),
 
-    config: *const device_config_t,
+    pub config: *const device_config_t,
 }
 
 #[repr(C)]

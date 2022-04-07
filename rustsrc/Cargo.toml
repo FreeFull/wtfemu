@@ -9,6 +9,7 @@ edition = "2021"
 crate-type = ["staticlib"]
 
 [dependencies]
+const-zero = "0.1.0"
 libc = "0.2"
 
 [profile.dev]
