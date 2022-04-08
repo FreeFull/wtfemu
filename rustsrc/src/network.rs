@@ -498,7 +498,7 @@ pub unsafe extern "C" fn network_card_has_config(card: c_int) -> c_int {
         return 0;
     }
 
-    return if !(*net_cards[card as usize].device).config.is_null() {
+    return if device_has_config(net_cards[card as usize].device) != 0 {
         1
     } else {
         0

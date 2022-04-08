@@ -133,6 +133,7 @@ extern "C" {
     pub fn device_speed_changed();
     pub fn device_force_redraw();
     pub fn device_get_name(d: *const device_t, bus: c_int, name: *mut c_char);
+    pub fn device_has_config(d: *const device_t) -> c_int;
 
     pub fn device_is_valid(d: *const device_t, m: c_int) -> c_int;
     pub fn device_get_config_int(name: *const c_char) -> c_int;
