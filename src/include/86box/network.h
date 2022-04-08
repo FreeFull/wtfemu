@@ -55,28 +55,9 @@
 #define NET_TYPE_PCAP	1		/* use the (Win)Pcap API */
 #define NET_TYPE_SLIRP	2		/* use the SLiRP port forwarder */
 
-/* Supported network cards. */
-enum {
-    NONE = 0,
-    NE1000,
-    NE2000,
-    RTL8019AS,
-    RTL8029AS
-};
-
-
 typedef int (*NETRXCB)(void *, uint8_t *, int);
 typedef int (*NETWAITCB)(void *);
 typedef int (*NETSETLINKSTATE)(void *);
-
-
-typedef struct netpkt {
-    void		*priv;
-    uint8_t		data[65536];	/* Maximum length + 1 to round up to the nearest power of 2. */
-    int			len;
-
-    struct netpkt	*prev, *next;
-} netpkt_t;
 
 typedef struct {
     const device_t	*device;
@@ -98,7 +79,6 @@ extern "C" {
 #endif
 
 /* Global variables. */
-extern int	nic_do_log;				/* config */
 extern int      network_ndev;
 extern int	network_rx_pause;
 extern netdev_t network_devs[32];
@@ -133,7 +113,6 @@ extern char	*network_card_get_internal_name(int);
 extern int	network_card_get_from_internal_name(char *);
 extern const device_t	*network_card_getdevice(int);
 
-extern void	network_set_wait(int wait);
 extern int	network_get_wait(void);
 
 extern void	network_timer_stop(void);

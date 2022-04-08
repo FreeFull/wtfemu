@@ -117,5 +117,4 @@ int                network_ndev;
 int                network_card;
 char                network_host[522];
 netdev_t        network_devs[32];
-int                network_rx_pause = 0,
-                network_tx_pause = 0;
+int                network_rx_pause = 0;

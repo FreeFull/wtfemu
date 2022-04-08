@@ -1,12 +1,12 @@
-use std::{
-    mem::size_of,
-    ptr,
-    sync::atomic::{AtomicI32, Ordering},
-};
+#![allow(non_upper_case_globals)]
+
+use std::{ptr, sync::Mutex};
 
 use crate::prelude::*;
 use const_zero::const_zero;
+use crossbeam_channel::{Receiver, Sender};
 use libc::*;
+use once_cell::sync::Lazy;
 
 // network.h
 
@@ -15,34 +15,24 @@ const NET_TYPE_NONE: c_int = 0; /* networking disabled */
 const NET_TYPE_PCAP: c_int = 1; /* use the (Win)Pcap API */
 const NET_TYPE_SLIRP: c_int = 2; /* use the SLiRP port forwarder */
 
-/* Supported network cards. */
-const NONE: c_int = 0;
-const NE1000: c_int = 1;
-const NE2000: c_int = 2;
-const RTL8019AS: c_int = 3;
-const RTL8029AS: c_int = 4;
-
 type NETRXCB = extern "C" fn(*mut c_void, *mut u8, c_int) -> c_int;
 type NETWAITCB = extern "C" fn(*mut c_void) -> c_int;
 type NETSETLINKSTATE = extern "C" fn(*mut c_void) -> c_int;
 
-#[repr(C)]
-pub struct netpkt_t {
-    r#priv: *mut c_void,
+struct Packet {
+    private: *mut c_void,
     data: [u8; 65536], /* Maximum length + 1 to round up to the nearest power of 2. */
     len: c_int,
-    prev: *mut netpkt_t,
-    next: *mut netpkt_t,
 }
 
-impl netpkt_t {
+unsafe impl Send for Packet {}
+
+impl Packet {
     const fn empty() -> Self {
-        netpkt_t {
-            r#priv: ptr::null_mut(),
+        Packet {
+            private: ptr::null_mut(),
             data: [0; 65536],
             len: 0,
-            prev: ptr::null_mut(),
-            next: ptr::null_mut(),
         }
     }
 }
@@ -64,7 +54,6 @@ struct netdev_t {
 }
 
 extern "C" {
-    static mut nic_do_log: c_int;
     static mut network_ndev: c_int;
     static mut network_rx_pause: c_int;
     static mut network_devs: [netdev_t; 32];
@@ -89,77 +78,19 @@ extern "C" {
     // Globals
     static mut network_type: c_int;
     static mut network_card: c_int;
-    static mut network_host: [c_char; 522];
-    static mut network_tx_pause: c_int;
+    pub static mut network_host: [c_char; 522]; // Not used here, but used in C
 }
 
 // Locals
-static mut net_wait: AtomicI32 = AtomicI32::new(0);
 static mut network_mutex: *mut c_void = ptr::null_mut();
 static mut network_mac: *mut u8 = ptr::null_mut();
 static mut network_timer_active: u8 = 0;
 static mut network_rx_queue_timer: pc_timer_t = unsafe { const_zero!(pc_timer_t) };
-static mut first_pkt: [*mut netpkt_t; 3] = [ptr::null_mut(); 3];
-static mut last_pkt: [*mut netpkt_t; 3] = [ptr::null_mut(); 3];
-static mut queued_pkt: netpkt_t = netpkt_t::empty();
-
-/*
-#ifdef ENABLE_NETWORK_LOG
-int network_do_log = ENABLE_NETWORK_LOG;
-static FILE *network_dump = NULL;
-static mutex_t *network_dump_mutex;
-
-
-static void
-network_log(const char *fmt, ...)
-{
-    va_list ap;
-
-    if (network_do_log) {
-        va_start(ap, fmt);
-        pclog_ex(fmt, ap);
-        va_end(ap);
-    }
-}
-
-
-static void
-network_dump_packet(netpkt_t *pkt)
-{
-    if (!network_dump)
-        return;
-
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    struct {
-        uint32_t ts_sec, ts_usec, incl_len, orig_len;
-    } pcap_packet_hdr = {
-        tv.tv_sec, tv.tv_usec, pkt->len, pkt->len
-    };
-
-    if (network_dump_mutex)
-        thread_wait_mutex(network_dump_mutex);
-
-    size_t written;
-    if ((written = fwrite(&pcap_packet_hdr, 1, sizeof(pcap_packet_hdr), network_dump)) < sizeof(pcap_packet_hdr)) {
-        network_log("NETWORK: failed to write dump packet header\n");
-        fseek(network_dump, -written, SEEK_CUR);
-    } else {
-        if ((written = fwrite(pkt->data, 1, pkt->len, network_dump)) < pkt->len) {
-                network_log("NETWORK: failed to write dump packet data\n");
-                fseek(network_dump, -written - sizeof(pcap_packet_hdr), SEEK_CUR);
-        }
-        fflush(network_dump);
-    }
-
-    if (network_dump_mutex)
-        thread_release_mutex(network_dump_mutex);
-}
-#else
-#define network_log(fmt, ...)
-#define network_dump_packet(pkt)
-#endif
-*/
+static RX_CHANNEL: Lazy<(Sender<Packet>, Receiver<Packet>)> =
+    Lazy::new(|| crossbeam_channel::unbounded());
+static TX_CHANNEL: Lazy<(Sender<Packet>, Receiver<Packet>)> =
+    Lazy::new(|| crossbeam_channel::unbounded());
+static mut queued_pkt: Lazy<Mutex<Packet>> = Lazy::new(|| Mutex::new(Packet::empty()));
 
 #[no_mangle]
 pub unsafe extern "C" fn network_wait(wait: u8) {
@@ -198,7 +129,7 @@ pub unsafe extern "C" fn network_init() {
 
     /* Initialize the Pcap system module, if present. */
     i = net_pcap_prepare(&mut network_devs[network_ndev as usize] as *mut _);
-    if (i > 0) {
+    if i > 0 {
         network_ndev += i;
     }
     /* // todo
@@ -230,142 +161,72 @@ pub unsafe extern "C" fn network_queue_put(
     data: *mut u8,
     len: c_int,
 ) {
-    let tx = tx as usize;
-    let temp = calloc(1, size_of::<netpkt_t>()) as *mut netpkt_t;
-    (*temp).r#priv = r#priv;
-    memcpy(
-        (*temp).data.as_mut_ptr() as *mut _,
-        data as *mut _,
-        len as size_t,
-    );
-    (*temp).len = len;
-    (*temp).prev = last_pkt[tx];
-    (*temp).next = ptr::null_mut();
+    let mut temp = Packet::empty();
+    temp.private = r#priv;
+    ptr::copy(data, temp.data.as_mut_ptr(), len as usize);
+    temp.len = len;
 
-    if !last_pkt[tx].is_null() {
-        (*last_pkt[tx]).next = temp;
-    }
-    last_pkt[tx] = temp;
-
-    if first_pkt[tx].is_null() {
-        first_pkt[tx] = temp;
+    match tx {
+        0 => {
+            let _ = RX_CHANNEL.0.send(temp);
+        }
+        1 => {
+            let _ = TX_CHANNEL.0.send(temp);
+        }
+        _ => {
+            panic!("network_queue_put: Invalid tx value: {}", tx);
+        }
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn network_queue_get(tx: c_int, pkt: *mut netpkt_t) {
-    let tx = tx as usize;
-    let temp = first_pkt[tx as usize];
+fn network_queue_get(tx: c_int, pkt: &mut Packet) {
+    let temp = match tx {
+        0 => RX_CHANNEL.1.try_recv(),
+        1 => TX_CHANNEL.1.try_recv(),
+        _ => panic!("network_queue_get: invalid tx value: {}", tx),
+    };
 
-    if temp.is_null() {
-        memset(pkt as *mut _, 0x00, size_of::<netpkt_t>());
+    if temp.is_err() {
+        *pkt = Packet::empty();
         return;
     }
-
-    memcpy(pkt as *mut _, temp as *mut _, size_of::<netpkt_t>());
-
-    first_pkt[tx] = (*temp).next;
-    free(temp as *mut _);
-
-    if first_pkt[tx].is_null() {
-        last_pkt[tx] = ptr::null_mut();
-    }
+    let temp = temp.unwrap();
+    *pkt = temp;
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn network_queue_transmit(tx: c_int) {
-    let tx = tx as usize;
-    let temp = first_pkt[tx];
+unsafe fn network_queue_transmit() {
+    let mut temp = match TX_CHANNEL.1.try_recv() {
+        Ok(temp) => temp,
+        _ => return,
+    };
 
-    if temp.is_null() {
-        return;
-    }
-
-    if (*temp).len > 0 {
+    if temp.len > 0 {
         // todo: Figure out how to do network logging
         //network_dump_packet(temp);
         /* Why on earth is this not a function pointer?! */
         match network_type {
             NET_TYPE_PCAP => {
-                net_pcap_in((*temp).data.as_mut_ptr(), (*temp).len);
+                net_pcap_in(temp.data.as_mut_ptr(), temp.len);
             }
 
             NET_TYPE_SLIRP => {
-                net_slirp_in((*temp).data.as_mut_ptr(), (*temp).len);
+                net_slirp_in(temp.data.as_mut_ptr(), temp.len);
             }
             _ => {}
         }
     }
-
-    first_pkt[tx] = (*temp).next;
-    free(temp as *mut _);
-
-    if first_pkt[tx].is_null() {
-        last_pkt[tx] = ptr::null_mut();
-    }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn network_queue_copy(dest: c_int, src: c_int) {
-    let dest = dest as usize;
-    let src = src as usize;
-
-    let temp = first_pkt[src];
-
-    if temp.is_null() {
-        return;
-    }
-
-    let temp2 = calloc(1, size_of::<netpkt_t>()) as *mut netpkt_t;
-    (*temp2).r#priv = (*temp).r#priv;
-    memcpy(
-        (*temp2).data.as_mut_ptr() as *mut _,
-        (*temp).data.as_mut_ptr() as *mut _,
-        (*temp).len as size_t,
-    );
-    (*temp2).len = (*temp).len;
-    (*temp2).prev = last_pkt[dest];
-    (*temp2).next = ptr::null_mut();
-
-    if !last_pkt[dest].is_null() {
-        (*last_pkt[dest]).next = temp2;
-    }
-    last_pkt[dest] = temp2;
-
-    if first_pkt[dest].is_null() {
-        first_pkt[dest] = temp2;
-    }
-
-    first_pkt[src] = (*temp).next;
-    free(temp as *mut _);
-
-    if first_pkt[src].is_null() {
-        last_pkt[src] = ptr::null_mut();
-    }
+unsafe fn network_queue_clear(tx: c_int) {
+    let receiver = match tx {
+        0 => &RX_CHANNEL.1,
+        1 => &TX_CHANNEL.1,
+        _ => panic!("network_queue_clear: Invalid tx value: {}", tx),
+    };
+    while let Ok(_) = receiver.try_recv() {}
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn network_queue_clear(tx: c_int) {
-    let tx = tx as usize;
-    let mut temp = first_pkt[tx];
-    let mut temp2;
-
-    if temp.is_null() {
-        return;
-    }
-
-    while !temp.is_null() {
-        temp2 = (*temp).next;
-        free(temp as *mut _);
-        temp = temp2;
-    }
-
-    first_pkt[tx] = ptr::null_mut();
-    last_pkt[tx] = ptr::null_mut();
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn network_rx_queue(_priv: *mut c_void) {
+unsafe extern "C" fn network_rx_queue(_priv: *mut c_void) {
     let mut ret: c_int = 1;
 
     if network_rx_pause != 0 || thread_test_mutex(network_mutex) == 0 {
@@ -375,34 +236,30 @@ pub unsafe extern "C" fn network_rx_queue(_priv: *mut c_void) {
         );
         return;
     }
-
-    if queued_pkt.len == 0 {
-        network_queue_get(0, &mut queued_pkt as *mut _);
+    let mut pkt = match queued_pkt.try_lock() {
+        Ok(pkt) => pkt,
+        Err(_) => return,
+    };
+    if pkt.len == 0 {
+        network_queue_get(0, &mut pkt);
     }
-    if queued_pkt.len > 0 {
-        //network_dump_packet(&queued_pkt);
-        ret = (net_cards[network_card as usize].rx)(
-            queued_pkt.r#priv,
-            queued_pkt.data.as_mut_ptr(),
-            queued_pkt.len,
-        );
+    if pkt.len > 0 {
+        //network_dump_packet(&queued_pkt_);
+        ret = (net_cards[network_card as usize].rx)(pkt.private, pkt.data.as_mut_ptr(), pkt.len);
     }
     timer_on_auto(
-        &mut network_rx_queue_timer as *mut _,
+        &mut network_rx_queue_timer,
         0.762939453125
             * 2.0
-            * (if queued_pkt.len >= 128 {
-                queued_pkt.len as f64
+            * (if pkt.len >= 128 {
+                pkt.len as f64
             } else {
                 128.0
             }),
     );
     if ret != 0 {
-        queued_pkt.len = 0;
+        pkt.len = 0;
     }
-
-    /* Transmission. */
-    network_queue_copy(1, 2);
 
     network_wait(0);
 }
@@ -433,8 +290,6 @@ pub unsafe extern "C" fn network_attach(
     net_cards[network_card as usize].set_link_state = set_link_state;
     network_mac = mac;
 
-    network_set_wait(0);
-
     /* Activate the platform module. */
     match network_type {
         NET_TYPE_PCAP => {
@@ -448,24 +303,13 @@ pub unsafe extern "C" fn network_attach(
         _ => {}
     }
 
-    first_pkt[0] = ptr::null_mut();
-    first_pkt[1] = ptr::null_mut();
-    first_pkt[2] = ptr::null_mut();
-    last_pkt[0] = ptr::null_mut();
-    last_pkt[1] = ptr::null_mut();
-    last_pkt[2] = ptr::null_mut();
-    memset(
-        &mut queued_pkt as *mut _ as *mut _,
-        0x00,
-        size_of::<netpkt_t>(),
-    );
-    memset(
-        &mut network_rx_queue_timer as *mut _ as *mut _,
-        0x00,
-        size_of::<pc_timer_t>(),
-    );
+    queued_pkt
+        .lock()
+        .map(|mut pkt| *pkt = Packet::empty())
+        .unwrap();
+    ptr::write_bytes(&mut network_rx_queue_timer, 0x00, 1);
     timer_add(
-        &mut network_rx_queue_timer as *mut _,
+        &mut network_rx_queue_timer,
         network_rx_queue,
         ptr::null_mut(),
         0,
@@ -480,11 +324,7 @@ pub unsafe extern "C" fn network_attach(
 unsafe extern "C" fn network_timer_stop() {
     if network_timer_active != 0 {
         timer_stop(&mut network_rx_queue_timer);
-        memset(
-            &mut network_rx_queue_timer as *mut _ as *mut _,
-            0x00,
-            size_of::<pc_timer_t>(),
-        );
+        ptr::write_bytes(&mut network_rx_queue_timer, 0x00, 1);
         network_timer_active = 0;
     }
 }
@@ -553,7 +393,7 @@ pub unsafe extern "C" fn network_reset() {
     #endif*/
 
     /* Initialize the platform module. */
-    match (network_type) {
+    match network_type {
         NET_TYPE_PCAP => {
             i = net_pcap_init();
         }
@@ -598,7 +438,7 @@ pub unsafe extern "C" fn network_reset() {
 pub unsafe extern "C" fn network_tx(bufp: *mut u8, len: c_int) {
     ui_sb_update_icon(SB_NETWORK, 1);
 
-    network_queue_put(2, ptr::null_mut(), bufp, len);
+    network_queue_put(1, ptr::null_mut(), bufp, len);
 
     ui_sb_update_icon(SB_NETWORK, 0);
 }
@@ -606,67 +446,63 @@ pub unsafe extern "C" fn network_tx(bufp: *mut u8, len: c_int) {
 /* Actually transmit the packet. */
 #[no_mangle]
 pub unsafe extern "C" fn network_tx_queue_check() -> c_int {
-    if ((first_pkt[1].is_null()) && (last_pkt[1].is_null())) {
+    if TX_CHANNEL.1.is_empty() {
         return 0;
     }
 
-    if (network_tx_pause != 0) {
-        return 1;
-    }
-
-    network_queue_transmit(1);
+    network_queue_transmit();
     return 1;
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn network_dev_to_id(devname: *mut c_char) -> c_int {
     for i in 0..network_ndev as usize {
-        if (strcmp(network_devs[i].device.as_mut_ptr() as *mut c_char, devname) == 0) {
-            return (i as c_int);
+        if strcmp(network_devs[i].device.as_ptr() as *const c_char, devname) == 0 {
+            return i as c_int;
         }
     }
 
     /* If no match found, assume "none". */
-    return (0);
+    return 0;
 }
 
 /* UI */
 #[no_mangle]
 pub unsafe extern "C" fn network_available() -> c_int {
-    if ((network_type == NET_TYPE_NONE) || (network_card == 0)) {
-        return (0);
+    if (network_type == NET_TYPE_NONE) || (network_card == 0) {
+        return 0;
     }
 
-    return (1);
+    return 1;
 }
 
 /* UI */
 #[no_mangle]
 pub unsafe extern "C" fn network_card_available(card: c_int) -> c_int {
-    if (!net_cards[card as usize].device.is_null()) {
-        return (device_available(net_cards[card as usize].device));
+    if !net_cards[card as usize].device.is_null() {
+        return device_available(net_cards[card as usize].device);
     }
-    return (1);
+    return 1;
 }
 
 /* UI */
 #[no_mangle]
 pub unsafe extern "C" fn network_card_getdevice(card: c_int) -> *const device_t {
-    return (net_cards[card as usize].device);
+    return net_cards[card as usize].device;
 }
 
 /* UI */
 #[no_mangle]
 pub unsafe extern "C" fn network_card_has_config(card: c_int) -> c_int {
     if net_cards[card as usize].device.is_null() {
-        return (0);
+        return 0;
     }
 
-    return (if !(*net_cards[card as usize].device).config.is_null() {
+    return if !(*net_cards[card as usize].device).config.is_null() {
         1
     } else {
         0
-    });
+    };
 }
 
 /* UI */
@@ -680,9 +516,9 @@ pub unsafe extern "C" fn network_card_get_internal_name(card: c_int) -> *mut c_c
 pub unsafe extern "C" fn network_card_get_from_internal_name(s: *mut c_char) -> c_int {
     let mut c = 0;
 
-    while (!net_cards[c].device.is_null()) {
-        if (strcmp((*net_cards[c].device).internal_name as *mut c_char, s) == 0) {
-            return (c as c_int);
+    while !net_cards[c].device.is_null() {
+        if strcmp((*net_cards[c].device).internal_name as *mut c_char, s) == 0 {
+            return c as c_int;
         }
         c += 1;
     }
@@ -691,14 +527,6 @@ pub unsafe extern "C" fn network_card_get_from_internal_name(s: *mut c_char) -> 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn network_set_wait(wait: c_int) {
-    net_wait.store(wait, Ordering::SeqCst);
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn network_get_wait() -> c_int {
-    let ret;
-
-    ret = net_wait.load(Ordering::SeqCst);
-    return ret;
+pub extern "C" fn network_get_wait() -> c_int {
+    return 0;
 }
