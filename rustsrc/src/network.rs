@@ -5,7 +5,6 @@ use std::{ptr, sync::Mutex};
 use crate::prelude::*;
 use const_zero::const_zero;
 use crossbeam_channel::{Receiver, Sender};
-use libc::*;
 use once_cell::sync::Lazy;
 
 // network.h
@@ -15,9 +14,9 @@ const NET_TYPE_NONE: c_int = 0; /* networking disabled */
 const NET_TYPE_PCAP: c_int = 1; /* use the (Win)Pcap API */
 const NET_TYPE_SLIRP: c_int = 2; /* use the SLiRP port forwarder */
 
-type NETRXCB = extern "C" fn(*mut c_void, *mut u8, c_int) -> c_int;
-type NETWAITCB = extern "C" fn(*mut c_void) -> c_int;
-type NETSETLINKSTATE = extern "C" fn(*mut c_void) -> c_int;
+type NETRXCB = Option<extern "C" fn(*mut c_void, *mut u8, c_int) -> c_int>;
+type NETWAITCB = Option<extern "C" fn(*mut c_void) -> c_int>;
+type NETSETLINKSTATE = Option<extern "C" fn(*mut c_void) -> c_int>;
 
 struct Packet {
     private: *mut c_void,
@@ -41,23 +40,37 @@ impl Packet {
 struct netcard_t {
     device: *const device_t,
     r#priv: *mut c_void,
-    poll: extern "C" fn(*mut c_void) -> c_int,
+    poll: Option<extern "C" fn(*mut c_void) -> c_int>,
     rx: NETRXCB,
     wait: NETWAITCB,
     set_link_state: NETSETLINKSTATE,
 }
 
+const poll_none: Option<extern "C" fn(*mut c_void) -> c_int> = None;
+const rx_none: NETRXCB = None;
+const wait_none: NETWAITCB = None;
+const set_link_state_none: NETSETLINKSTATE = None;
+
+impl netcard_t {
+    pub const fn new(device: *const device_t) -> Self {
+        netcard_t {
+            device,
+            r#priv: ptr::null_mut(),
+            poll: poll_none,
+            rx: rx_none,
+            wait: wait_none,
+            set_link_state: set_link_state_none,
+        }
+    }
+}
+
 #[repr(C)]
-struct netdev_t {
+pub struct netdev_t {
     device: [c_char; 128],
     description: [c_char; 128],
 }
 
 extern "C" {
-    static mut network_ndev: c_int;
-    static mut network_rx_pause: c_int;
-    static mut network_devs: [netdev_t; 32];
-
     fn net_pcap_prepare(_: *mut netdev_t) -> c_int;
     fn net_pcap_init() -> c_int;
     fn net_pcap_reset(_: *const netcard_t, _: *mut u8) -> c_int;
@@ -72,14 +85,78 @@ extern "C" {
 
 // network.c
 
-extern "C" {
-    static mut net_cards: [netcard_t; 20];
+const net_none_device: device_t = device_t {
+    name: b"None\0".as_ptr() as *const _,
+    internal_name: b"none\0".as_ptr() as *const _,
+    flags: 0,
+    local: NET_TYPE_NONE as _,
+    init: None,
+    close: None,
+    reset: None,
+    device_t_union: device_t_union { available: None },
+    speed_changed: None,
+    force_redraw: None,
+    config: ptr::null(),
+};
 
-    // Globals
-    static mut network_type: c_int;
-    static mut network_card: c_int;
-    pub static mut network_host: [c_char; 522]; // Not used here, but used in C
+extern "C" {
+    pub static threec503_device: device_t;
+    pub static pcnet_am79c960_device: device_t;
+    pub static pcnet_am79c961_device: device_t;
+    pub static ne1000_device: device_t;
+    pub static ne2000_device: device_t;
+    pub static pcnet_am79c960_eb_device: device_t;
+    pub static rtl8019as_device: device_t;
+    pub static wd8003e_device: device_t;
+    pub static wd8003eb_device: device_t;
+    pub static wd8013ebt_device: device_t;
+    pub static plip_device: device_t;
+    pub static ethernext_mc_device: device_t;
+    pub static wd8003eta_device: device_t;
+    pub static wd8003ea_device: device_t;
+    pub static pcnet_am79c973_device: device_t;
+    pub static pcnet_am79c970a_device: device_t;
+    pub static rtl8029as_device: device_t;
+    pub static pcnet_am79c960_vlb_device: device_t;
 }
+
+static mut net_cards: [netcard_t; 20] = [
+    // clang-format off
+    netcard_t::new(&net_none_device),
+    netcard_t::new(unsafe { &threec503_device }),
+    netcard_t::new(unsafe { &pcnet_am79c960_device }),
+    netcard_t::new(unsafe { &pcnet_am79c961_device }),
+    netcard_t::new(unsafe { &ne1000_device }),
+    netcard_t::new(unsafe { &ne2000_device }),
+    netcard_t::new(unsafe { &pcnet_am79c960_eb_device }),
+    netcard_t::new(unsafe { &rtl8019as_device }),
+    netcard_t::new(unsafe { &wd8003e_device }),
+    netcard_t::new(unsafe { &wd8003eb_device }),
+    netcard_t::new(unsafe { &wd8013ebt_device }),
+    netcard_t::new(unsafe { &plip_device }),
+    netcard_t::new(unsafe { &ethernext_mc_device }),
+    netcard_t::new(unsafe { &wd8003eta_device }),
+    netcard_t::new(unsafe { &wd8003ea_device }),
+    netcard_t::new(unsafe { &pcnet_am79c973_device }),
+    netcard_t::new(unsafe { &pcnet_am79c970a_device }),
+    netcard_t::new(unsafe { &rtl8029as_device }),
+    netcard_t::new(unsafe { &pcnet_am79c960_vlb_device }),
+    netcard_t::new(ptr::null()), // clang-format off
+];
+
+// Globals
+#[no_mangle]
+static mut network_type: c_int = 0;
+#[no_mangle]
+static mut network_ndev: c_int = 0;
+#[no_mangle]
+pub static mut network_card: c_int = 0;
+#[no_mangle]
+pub static mut network_host: [c_char; 522] = [0; 522]; // Not used here, but used in C
+#[no_mangle]
+pub static mut network_devs: [netdev_t; 32] = unsafe { const_zero!([netdev_t; 32]) };
+#[no_mangle]
+pub static mut network_rx_pause: c_int = 0;
 
 // Locals
 static mut network_mutex: *mut c_void = ptr::null_mut();
@@ -113,7 +190,7 @@ pub unsafe extern "C" fn network_init() {
     let i;
 
     /* Initialize to a known state. */
-    network_type = NET_TYPE_NONE;
+    network_type = NET_TYPE_NONE as _;
     network_card = 0;
 
     /* Create a first device entry that's always there, as needed by UI. */
@@ -245,7 +322,13 @@ unsafe extern "C" fn network_rx_queue(_priv: *mut c_void) {
     }
     if pkt.len > 0 {
         //network_dump_packet(&queued_pkt_);
-        ret = (net_cards[network_card as usize].rx)(pkt.private, pkt.data.as_mut_ptr(), pkt.len);
+        ret = net_cards[network_card as usize]
+            .rx
+            .expect("network_rx_queue: Null rx function")(
+            pkt.private,
+            pkt.data.as_mut_ptr(),
+            pkt.len,
+        );
     }
     timer_on_auto(
         &mut network_rx_queue_timer,

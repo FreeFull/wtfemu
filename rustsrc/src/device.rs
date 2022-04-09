@@ -57,17 +57,20 @@ pub struct device_config_t {
 
 #[repr(C)]
 pub union device_t_union {
-    available: extern "C" fn() -> c_int,
-    poll: extern "C" fn(x: c_int, y: c_int, z: c_int, b: c_int, r#priv: *mut c_void) -> c_int,
-    register_pci_slot: extern "C" fn(
-        device: c_int,
-        r#type: c_int,
-        inta: c_int,
-        intb: c_int,
-        intc: c_int,
-        intd: c_int,
-        r#priv: *mut c_void,
-    ),
+    pub available: Option<extern "C" fn() -> c_int>,
+    pub poll:
+        Option<extern "C" fn(x: c_int, y: c_int, z: c_int, b: c_int, r#priv: *mut c_void) -> c_int>,
+    pub register_pci_slot: Option<
+        extern "C" fn(
+            device: c_int,
+            r#type: c_int,
+            inta: c_int,
+            intb: c_int,
+            intc: c_int,
+            intd: c_int,
+            r#priv: *mut c_void,
+        ),
+    >,
 }
 
 #[repr(C)]
@@ -77,14 +80,14 @@ pub struct device_t {
     pub flags: u32, /* system flags */
     pub local: u32, /* flags local to device */
 
-    pub init: extern "C" fn(*const device_t) -> *mut c_void,
-    pub close: extern "C" fn(r#priv: *mut c_void),
-    pub reset: extern "C" fn(r#priv: *mut c_void),
+    pub init: Option<extern "C" fn(*const device_t) -> *mut c_void>,
+    pub close: Option<extern "C" fn(r#priv: *mut c_void)>,
+    pub reset: Option<extern "C" fn(r#priv: *mut c_void)>,
 
     pub device_t_union: device_t_union,
 
-    pub speed_changed: extern "C" fn(r#priv: *mut c_void),
-    pub force_redraw: extern "C" fn(r#priv: *mut c_void),
+    pub speed_changed: Option<extern "C" fn(r#priv: *mut c_void)>,
+    pub force_redraw: Option<extern "C" fn(r#priv: *mut c_void)>,
 
     pub config: *const device_config_t,
 }

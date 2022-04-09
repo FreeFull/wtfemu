@@ -1,4 +1,4 @@
-use libc::*;
+use crate::prelude::*;
 
 #[repr(C, align(1))]
 #[derive(Clone, Copy)]

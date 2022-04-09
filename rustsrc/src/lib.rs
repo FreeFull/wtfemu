@@ -12,4 +12,6 @@ pub mod prelude {
     pub use crate::thread::*;
     pub use crate::timer::*;
     pub use crate::ui::*;
+
+    pub use libc::*;
 }
