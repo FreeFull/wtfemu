@@ -1,6 +1,12 @@
 #![allow(non_upper_case_globals)]
 
-use std::{ptr, sync::Mutex};
+use std::{
+    ptr,
+    sync::{
+        atomic::{AtomicI32, AtomicPtr, AtomicU8, Ordering},
+        Mutex,
+    },
+};
 
 use crate::prelude::*;
 use const_zero::const_zero;
@@ -146,35 +152,35 @@ static mut net_cards: [netcard_t; 20] = [
 
 // Globals
 #[no_mangle]
-static mut network_type: c_int = 0;
+pub static network_type: AtomicI32 = AtomicI32::new(0);
 #[no_mangle]
-static mut network_ndev: c_int = 0;
+pub static network_ndev: AtomicI32 = AtomicI32::new(0);
 #[no_mangle]
-pub static mut network_card: c_int = 0;
+pub static network_card: AtomicI32 = AtomicI32::new(0);
 #[no_mangle]
 pub static mut network_host: [c_char; 522] = [0; 522]; // Not used here, but used in C
 #[no_mangle]
 pub static mut network_devs: [netdev_t; 32] = unsafe { const_zero!([netdev_t; 32]) };
 #[no_mangle]
-pub static mut network_rx_pause: c_int = 0;
+pub static network_rx_pause: AtomicI32 = AtomicI32::new(0);
 
 // Locals
-static mut network_mutex: *mut c_void = ptr::null_mut();
-static mut network_mac: *mut u8 = ptr::null_mut();
-static mut network_timer_active: u8 = 0;
+static network_mutex: AtomicPtr<c_void> = AtomicPtr::new(ptr::null_mut());
+static network_mac: AtomicPtr<u8> = AtomicPtr::new(ptr::null_mut());
+static network_timer_active: AtomicU8 = AtomicU8::new(0);
 static mut network_rx_queue_timer: pc_timer_t = unsafe { const_zero!(pc_timer_t) };
 static RX_CHANNEL: Lazy<(Sender<Packet>, Receiver<Packet>)> =
     Lazy::new(|| crossbeam_channel::unbounded());
 static TX_CHANNEL: Lazy<(Sender<Packet>, Receiver<Packet>)> =
     Lazy::new(|| crossbeam_channel::unbounded());
-static mut queued_pkt: Lazy<Mutex<Packet>> = Lazy::new(|| Mutex::new(Packet::empty()));
+static queued_pkt: Lazy<Mutex<Packet>> = Lazy::new(|| Mutex::new(Packet::empty()));
 
 #[no_mangle]
 pub unsafe extern "C" fn network_wait(wait: u8) {
     if wait != 0 {
-        thread_wait_mutex(network_mutex);
+        thread_wait_mutex(network_mutex.load(Ordering::SeqCst));
     } else {
-        thread_release_mutex(network_mutex);
+        thread_release_mutex(network_mutex.load(Ordering::SeqCst));
     }
 }
 
@@ -190,8 +196,8 @@ pub unsafe extern "C" fn network_init() {
     let i;
 
     /* Initialize to a known state. */
-    network_type = NET_TYPE_NONE as _;
-    network_card = 0;
+    network_type.store(NET_TYPE_NONE, Ordering::SeqCst);
+    network_card.store(0, Ordering::SeqCst);
 
     /* Create a first device entry that's always there, as needed by UI. */
     strcpy(
@@ -202,12 +208,12 @@ pub unsafe extern "C" fn network_init() {
         network_devs[0].description.as_mut_ptr() as *mut _,
         b"None\0".as_ptr() as *const _,
     );
-    network_ndev = 1;
+    network_ndev.store(1, Ordering::SeqCst);
 
     /* Initialize the Pcap system module, if present. */
-    i = net_pcap_prepare(&mut network_devs[network_ndev as usize] as *mut _);
+    i = net_pcap_prepare(&mut network_devs[network_ndev.load(Ordering::SeqCst) as usize] as *mut _);
     if i > 0 {
-        network_ndev += i;
+        network_ndev.fetch_add(i, Ordering::SeqCst);
     }
     /* // todo
     #ifdef ENABLE_NETWORK_LOG
@@ -281,7 +287,7 @@ unsafe fn network_queue_transmit() {
         // todo: Figure out how to do network logging
         //network_dump_packet(temp);
         /* Why on earth is this not a function pointer?! */
-        match network_type {
+        match network_type.load(Ordering::SeqCst) {
             NET_TYPE_PCAP => {
                 net_pcap_in(temp.data.as_mut_ptr(), temp.len);
             }
@@ -306,7 +312,9 @@ unsafe fn network_queue_clear(tx: c_int) {
 unsafe extern "C" fn network_rx_queue(_priv: *mut c_void) {
     let mut ret: c_int = 1;
 
-    if network_rx_pause != 0 || thread_test_mutex(network_mutex) == 0 {
+    if network_rx_pause.load(Ordering::SeqCst) != 0
+        || thread_test_mutex(network_mutex.load(Ordering::SeqCst)) == 0
+    {
         timer_on_auto(
             &mut network_rx_queue_timer as *mut _,
             0.762939453125 * 2.0 * 128.0,
@@ -322,7 +330,7 @@ unsafe extern "C" fn network_rx_queue(_priv: *mut c_void) {
     }
     if pkt.len > 0 {
         //network_dump_packet(&queued_pkt_);
-        ret = net_cards[network_card as usize]
+        ret = net_cards[network_card.load(Ordering::SeqCst) as usize]
             .rx
             .expect("network_rx_queue: Null rx function")(
             pkt.private,
@@ -362,25 +370,32 @@ pub unsafe extern "C" fn network_attach(
     wait: NETWAITCB,
     set_link_state: NETSETLINKSTATE,
 ) {
-    if network_card == 0 {
+    let card = network_card.load(Ordering::SeqCst);
+    if card == 0 {
         return;
     }
 
     /* Save the card's info. */
-    net_cards[network_card as usize].r#priv = dev;
-    net_cards[network_card as usize].rx = rx;
-    net_cards[network_card as usize].wait = wait;
-    net_cards[network_card as usize].set_link_state = set_link_state;
-    network_mac = mac;
+    net_cards[card as usize].r#priv = dev;
+    net_cards[card as usize].rx = rx;
+    net_cards[card as usize].wait = wait;
+    net_cards[card as usize].set_link_state = set_link_state;
+    network_mac.store(mac, Ordering::SeqCst);
 
     /* Activate the platform module. */
-    match network_type {
+    match network_type.load(Ordering::SeqCst) {
         NET_TYPE_PCAP => {
-            net_pcap_reset(&net_cards[network_card as usize], network_mac);
+            net_pcap_reset(
+                &net_cards[card as usize],
+                network_mac.load(Ordering::SeqCst),
+            );
         }
 
         NET_TYPE_SLIRP => {
-            net_slirp_reset(&net_cards[network_card as usize], network_mac);
+            net_slirp_reset(
+                &net_cards[card as usize],
+                network_mac.load(Ordering::SeqCst),
+            );
         }
 
         _ => {}
@@ -399,16 +414,16 @@ pub unsafe extern "C" fn network_attach(
     );
     /* 10 mbps. */
     timer_on_auto(&mut network_rx_queue_timer as *mut _, 0.762939453125 * 2.0);
-    network_timer_active = 1;
+    network_timer_active.store(1, Ordering::SeqCst);
 }
 
 /* Stop the network timer. */
 #[no_mangle]
 unsafe extern "C" fn network_timer_stop() {
-    if network_timer_active != 0 {
+    if network_timer_active.load(Ordering::SeqCst) != 0 {
         timer_stop(&mut network_rx_queue_timer);
         ptr::write_bytes(&mut network_rx_queue_timer, 0x00, 1);
-        network_timer_active = 0;
+        network_timer_active.store(0, Ordering::SeqCst);
     }
 }
 
@@ -418,7 +433,7 @@ pub unsafe extern "C" fn network_close() {
     network_timer_stop();
 
     /* If already closed, do nothing. */
-    if network_mutex.is_null() {
+    if network_mutex.load(Ordering::SeqCst).is_null() {
         return;
     }
 
@@ -429,9 +444,9 @@ pub unsafe extern "C" fn network_close() {
     net_slirp_close();
 
     /* Close the network thread mutex. */
-    thread_close_mutex(network_mutex);
-    network_mutex = ptr::null_mut();
-    network_mac = ptr::null_mut();
+    let mutex = network_mutex.swap(ptr::null_mut(), Ordering::SeqCst);
+    thread_close_mutex(mutex);
+    network_mac.store(ptr::null_mut(), Ordering::SeqCst);
     /*
     #ifdef ENABLE_NETWORK_LOG
         thread_close_mutex(network_dump_mutex);
@@ -464,19 +479,20 @@ pub unsafe extern "C" fn network_reset() {
 
     /* Just in case.. */
     network_close();
+    let card = network_card.load(Ordering::SeqCst);
 
     /* If no active card, we're done. */
-    if (network_type == NET_TYPE_NONE) || (network_card == 0) {
+    if (network_type.load(Ordering::SeqCst) == NET_TYPE_NONE) || (card == 0) {
         return;
     }
 
-    network_mutex = thread_create_mutex();
+    network_mutex.store(thread_create_mutex(), Ordering::SeqCst);
     /*#ifdef ENABLE_NETWORK_LOG
         network_dump_mutex = thread_create_mutex();
     #endif*/
 
     /* Initialize the platform module. */
-    match network_type {
+    match network_type.load(Ordering::SeqCst) {
         NET_TYPE_PCAP => {
             i = net_pcap_init();
         }
@@ -497,7 +513,7 @@ pub unsafe extern "C" fn network_reset() {
         //          Settings dialog if yes.
 
         /* Disable network. */
-        network_type = NET_TYPE_NONE;
+        network_type.store(NET_TYPE_NONE, Ordering::SeqCst);
 
         return;
     }
@@ -507,12 +523,12 @@ pub unsafe extern "C" fn network_reset() {
                     net_cards[network_card].name);*/
 
     /* Add the (new?) card to the I/O system. */
-    if !net_cards[network_card as usize].device.is_null() {
+    if !net_cards[card as usize].device.is_null() {
         /*network_log(
             "NETWORK: adding device '%s'\n",
             net_cards[network_card].name,
         );*/
-        device_add(net_cards[network_card as usize].device);
+        device_add(net_cards[card as usize].device);
     }
 }
 
@@ -539,7 +555,7 @@ pub unsafe extern "C" fn network_tx_queue_check() -> c_int {
 
 #[no_mangle]
 pub unsafe extern "C" fn network_dev_to_id(devname: *mut c_char) -> c_int {
-    for i in 0..network_ndev as usize {
+    for i in 0..network_ndev.load(Ordering::SeqCst) as usize {
         if strcmp(network_devs[i].device.as_ptr() as *const c_char, devname) == 0 {
             return i as c_int;
         }
@@ -552,7 +568,9 @@ pub unsafe extern "C" fn network_dev_to_id(devname: *mut c_char) -> c_int {
 /* UI */
 #[no_mangle]
 pub unsafe extern "C" fn network_available() -> c_int {
-    if (network_type == NET_TYPE_NONE) || (network_card == 0) {
+    if (network_type.load(Ordering::SeqCst) == NET_TYPE_NONE)
+        || (network_card.load(Ordering::SeqCst) == 0)
+    {
         return 0;
     }
 
