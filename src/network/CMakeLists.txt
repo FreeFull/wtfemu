@@ -13,20 +13,8 @@
 #           Copyright 2020,2021 David Hrdlička.
 #
 
-add_library(net OBJECT net_pcap.c net_slirp.c net_dp8390.c net_3c503.c
+add_library(net OBJECT net_pcap.c net_dp8390.c net_3c503.c
     net_ne2000.c net_pcnet.c net_wd8003.c net_plip.c)
-
-option(SLIRP_EXTERNAL "Link against the system-provided libslirp library" OFF)
-mark_as_advanced(SLIRP_EXTERNAL)
-
-if(SLIRP_EXTERNAL)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(SLIRP REQUIRED IMPORTED_TARGET slirp)
-    target_link_libraries(86Box PkgConfig::SLIRP)
-else()
-    add_subdirectory(slirp)
-    target_link_libraries(86Box slirp)
-endif()
 
 if (HAIKU)
     target_link_libraries(86Box network)

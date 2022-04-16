@@ -101,11 +101,6 @@ extern int	net_pcap_reset(const netcard_t *, uint8_t *);
 extern void	net_pcap_close(void);
 extern void	net_pcap_in(uint8_t *, int);
 
-extern int	net_slirp_init(void);
-extern int	net_slirp_reset(const netcard_t *, uint8_t *);
-extern void	net_slirp_close(void);
-extern void	net_slirp_in(uint8_t *, int);
-
 extern int	network_dev_to_id(char *);
 extern int	network_card_available(int);
 extern int	network_card_has_config(int);

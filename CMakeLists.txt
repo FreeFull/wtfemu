@@ -26,9 +26,7 @@ if(OPENAL)
     list(APPEND VCPKG_MANIFEST_FEATURES "openal")
 endif()
 
-if(SLIRP_EXTERNAL)
-    list(APPEND VCPKG_MANIFEST_FEATURES "slirp")
-endif()
+list(APPEND VCPKG_MANIFEST_FEATURES "slirp")
 
 if(MUNT_EXTERNAL)
     list(APPEND VCPKG_MANIFEST_FEATURES "munt")
@@ -197,4 +195,4 @@ add_subdirectory(src)
 
 find_package(Corrosion REQUIRED)
 corrosion_import_crate(MANIFEST_PATH ${CMAKE_SOURCE_DIR}/rustsrc/Cargo.toml)
-target_link_libraries(86Box rust)
+target_link_libraries(86Box rust "-lslirp -lglib-2.0")
