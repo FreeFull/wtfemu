@@ -80,17 +80,20 @@ pub struct device_t {
     pub flags: u32, /* system flags */
     pub local: u32, /* flags local to device */
 
-    pub init: Option<extern "C" fn(*const device_t) -> *mut c_void>,
-    pub close: Option<extern "C" fn(r#priv: *mut c_void)>,
-    pub reset: Option<extern "C" fn(r#priv: *mut c_void)>,
+    pub init: Option<unsafe extern "C" fn(*const device_t) -> *mut c_void>,
+    pub close: Option<unsafe extern "C" fn(r#priv: *mut c_void)>,
+    pub reset: Option<unsafe extern "C" fn(r#priv: *mut c_void)>,
 
     pub device_t_union: device_t_union,
 
-    pub speed_changed: Option<extern "C" fn(r#priv: *mut c_void)>,
-    pub force_redraw: Option<extern "C" fn(r#priv: *mut c_void)>,
+    pub speed_changed: Option<unsafe extern "C" fn(r#priv: *mut c_void)>,
+    pub force_redraw: Option<unsafe extern "C" fn(r#priv: *mut c_void)>,
 
     pub config: *const device_config_t,
 }
+
+unsafe impl Send for device_t {}
+unsafe impl Sync for device_t {}
 
 #[repr(C)]
 pub struct device_context_t {

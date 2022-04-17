@@ -15,6 +15,7 @@ use once_cell::sync::Lazy;
 
 pub mod net_slirp;
 pub use net_slirp::*;
+pub mod net_dp8390;
 
 // network.h
 
