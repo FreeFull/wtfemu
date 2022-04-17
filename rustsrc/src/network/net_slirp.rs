@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     io,
     net::{Ipv4Addr, Ipv6Addr},
     os::unix::prelude::*,
@@ -44,30 +45,27 @@ impl Handler for SlirpHandler {
                 // Note: network_queue_put_safe always succeeds
                 network_queue_put_safe(0, Packet::new(card.r#priv, buf));
             }
-            //println!("Packet received, len {}", buf.len());
             Ok(buf.len())
         } else {
             // Card isn't ready, ignore the packet
-            println!("Packet dropped, {set_link_state} {wait}");
+            log!(Level::Trace, "Packet dropped, {set_link_state} {wait}");
             Ok(0)
         }
     }
 
     fn register_poll_fd(&mut self, _fd: std::os::unix::prelude::RawFd) {
-        println!("register_poll_fd: {}", _fd);
+        log!(Level::Trace, "register_poll_fd: {}", _fd);
     }
 
     fn unregister_poll_fd(&mut self, _fd: std::os::unix::prelude::RawFd) {
-        println!("unregister_poll_fd: {}", _fd);
+        log!(Level::Trace, "unregister_poll_fd: {}", _fd);
     }
 
     fn guest_error(&mut self, msg: &str) {
         log!(Level::Error, "SLIRP guest error: {}", msg);
     }
 
-    fn notify(&mut self) {
-        println!("notify");
-    }
+    fn notify(&mut self) {}
 
     fn timer_new(&mut self, func: Box<dyn FnMut()>) -> Box<Self::Timer> {
         let mut timer = Box::new(unsafe { const_zero!(pc_timer_t) });
@@ -159,22 +157,21 @@ impl SlirpThread {
             let context = libslirp::Context::new_with_opt(&opt, handler);
             // todo: Implement port forwarding config
             let mut timeout = u32::MAX;
-            let mut pollfds = Vec::new();
+            let mut pollfds = HashMap::new();
             let mut events = vec![EpollEvent::zeroed(); 1024];
             let waker_token = epoll.add(waker, Opts::IN).unwrap();
             loop {
                 context.pollfds_fill(&mut timeout, |raw_fd, poll_events| {
-                    let index = pollfds.len();
                     let token = epoll
                         .add(SlirpFd(raw_fd), to_interest(poll_events))
                         .unwrap();
-                    pollfds.push((token, poll_events, PollEvents::empty()));
-                    index as i32
+                    pollfds.insert(raw_fd, (token, poll_events, PollEvents::empty()));
+                    raw_fd
                 });
                 let result = epoll.wait(&mut events);
                 let err = result.is_err();
                 if err {
-                    println!("Epoll err: {:?}", result);
+                    log!(Level::Error, "Epoll err: {:?}", result);
                 }
                 if let Ok(events) = result {
                     for event in events {
@@ -190,17 +187,14 @@ impl SlirpThread {
                                 context.input(&pkt);
                             }
                         } else {
-                            // todo: Quadratic behaviour, figure out a fix later
-                            for (token, wanted, received) in &mut pollfds {
-                                if event.fd() == token.fd() {
-                                    *received |= *wanted & to_pollevents(interests);
-                                }
-                            }
+                            let (_token, wanted, received) =
+                                pollfds.get_mut(&event.fd()).expect("Unknown event fd");
+                            *received |= *wanted & to_pollevents(interests);
                         }
                     }
                 }
-                context.pollfds_poll(err, |index| pollfds[index as usize].2);
-                for (token, _, _) in pollfds.drain(..) {
+                context.pollfds_poll(err, |index| pollfds[&index].2);
+                for (_raw_fd, (token, _, _)) in pollfds.drain() {
                     let _ = epoll.remove(token);
                 }
             }
