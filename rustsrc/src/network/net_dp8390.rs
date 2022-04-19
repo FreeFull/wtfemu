@@ -24,138 +24,138 @@ use std::{
 *		Copyright 2008-2018 Bochs project.
 */
 
-const DP8390_FLAG_EVEN_MAC: c_int = 0x01;
-const DP8390_FLAG_CHECK_CR: c_int = 0x02;
-const DP8390_FLAG_CLEAR_IRQ: c_int = 0x04;
+pub const DP8390_FLAG_EVEN_MAC: u8 = 0x01;
+pub const DP8390_FLAG_CHECK_CR: u8 = 0x02;
+pub const DP8390_FLAG_CLEAR_IRQ: u8 = 0x04;
 
 /* Command Register - 00h read/write */
 #[repr(C)]
-struct CR_t {
-    stop: c_int,      /* STP - Software Reset command */
-    start: c_int,     /* START - start the NIC */
-    tx_packet: c_int, /* TXP - initiate packet transmission */
-    rdma_cmd: u8,     /* RD0,RD1,RD2 - Remote DMA command */
-    pgsel: u8,        /* PS0,PS1 - Page select */
+pub struct CR_t {
+    pub stop: c_int,      /* STP - Software Reset command */
+    pub start: c_int,     /* START - start the NIC */
+    pub tx_packet: c_int, /* TXP - initiate packet transmission */
+    pub rdma_cmd: u8,     /* RD0,RD1,RD2 - Remote DMA command */
+    pub pgsel: u8,        /* PS0,PS1 - Page select */
 }
 
 /* Interrupt Status Register - 07h read/write */
 
 #[repr(C)]
-struct ISR_t {
-    pkt_rx: c_int,    /* PRX - packet received with no errors */
-    pkt_tx: c_int,    /* PTX - packet txed with no errors */
-    rx_err: c_int,    /* RXE - packet rxed with 1 or more errors */
-    tx_err: c_int,    /* TXE - packet txed   "  " "    "    " */
-    overwrite: c_int, /* OVW - rx buffer resources exhausted */
-    cnt_oflow: c_int, /* CNT - network tally counter MSB's set */
-    rdma_done: c_int, /* RDC - remote DMA complete */
-    reset: c_int,     /* RST - reset status */
+pub struct ISR_t {
+    pub pkt_rx: c_int,    /* PRX - packet received with no errors */
+    pub pkt_tx: c_int,    /* PTX - packet txed with no errors */
+    pub rx_err: c_int,    /* RXE - packet rxed with 1 or more errors */
+    pub tx_err: c_int,    /* TXE - packet txed   "  " "    "    " */
+    pub overwrite: c_int, /* OVW - rx buffer resources exhausted */
+    pub cnt_oflow: c_int, /* CNT - network tally counter MSB's set */
+    pub rdma_done: c_int, /* RDC - remote DMA complete */
+    pub reset: c_int,     /* RST - reset status */
 }
 
 /* Interrupt Mask Register - 0fh write */
 #[repr(C)]
-struct IMR_t {
-    rx_inte: c_int,    /* PRXE - packet rx interrupt enable */
-    tx_inte: c_int,    /* PTXE - packet tx interrput enable */
-    rxerr_inte: c_int, /* RXEE - rx error interrupt enable */
-    txerr_inte: c_int, /* TXEE - tx error interrupt enable */
-    overw_inte: c_int, /* OVWE - overwrite warn int enable */
-    cofl_inte: c_int,  /* CNTE - counter o'flow int enable */
-    rdma_inte: c_int,  /* RDCE - remote DMA complete int enable */
-    reserved: c_int,   /* D7 - reserved */
+pub struct IMR_t {
+    pub rx_inte: c_int,    /* PRXE - packet rx interrupt enable */
+    pub tx_inte: c_int,    /* PTXE - packet tx interrput enable */
+    pub rxerr_inte: c_int, /* RXEE - rx error interrupt enable */
+    pub txerr_inte: c_int, /* TXEE - tx error interrupt enable */
+    pub overw_inte: c_int, /* OVWE - overwrite warn int enable */
+    pub cofl_inte: c_int,  /* CNTE - counter o'flow int enable */
+    pub rdma_inte: c_int,  /* RDCE - remote DMA complete int enable */
+    pub reserved: c_int,   /* D7 - reserved */
 }
 
 /* Data Configuration Register - 0eh write */
 #[repr(C)]
-struct DCR_t {
-    wdsize: c_int,   /* WTS - 8/16-bit select */
-    endian: c_int,   /* BOS - byte-order select */
-    longaddr: c_int, /* LAS - long-address select */
-    r#loop: c_int,   /* LS  - loopback select */
-    auto_rx: c_int,  /* AR  - auto-remove rx pkts with remote DMA */
-    fifo_size: u8,   /* FT0,FT1 - fifo threshold */
+pub struct DCR_t {
+    pub wdsize: c_int,   /* WTS - 8/16-bit select */
+    pub endian: c_int,   /* BOS - byte-order select */
+    pub longaddr: c_int, /* LAS - long-address select */
+    pub r#loop: c_int,   /* LS  - loopback select */
+    pub auto_rx: c_int,  /* AR  - auto-remove rx pkts with remote DMA */
+    pub fifo_size: u8,   /* FT0,FT1 - fifo threshold */
 }
 
 /* Transmit Configuration Register - 0dh write */
 #[repr(C)]
-struct TCR_t {
-    crc_disable: c_int, /* CRC - inhibit tx CRC */
-    loop_cntl: u8,      /* LB0,LB1 - loopback control */
-    ext_stoptx: c_int,  /* ATD - allow tx disable by external mcast */
-    coll_prio: c_int,   /* OFST - backoff algorithm select */
-    reserved: u8,       /* D5,D6,D7 - reserved */
+pub struct TCR_t {
+    pub crc_disable: c_int, /* CRC - inhibit tx CRC */
+    pub loop_cntl: u8,      /* LB0,LB1 - loopback control */
+    pub ext_stoptx: c_int,  /* ATD - allow tx disable by external mcast */
+    pub coll_prio: c_int,   /* OFST - backoff algorithm select */
+    pub reserved: u8,       /* D5,D6,D7 - reserved */
 }
 
 /* Transmit Status Register - 04h read */
 #[repr(C)]
-struct TSR_t {
-    tx_ok: c_int,      /* PTX - tx complete without error */
-    reserved: c_int,   /*  D1 - reserved */
-    collided: c_int,   /* COL - tx collided >= 1 times */
-    aborted: c_int,    /* ABT - aborted due to excessive collisions */
-    no_carrier: c_int, /* CRS - carrier-sense lost */
-    fifo_ur: c_int,    /* FU  - FIFO underrun */
-    cd_hbeat: c_int,   /* CDH - no tx cd-heartbeat from transceiver */
-    ow_coll: c_int,    /* OWC - out-of-window collision */
+pub struct TSR_t {
+    pub tx_ok: c_int,      /* PTX - tx complete without error */
+    pub reserved: c_int,   /*  D1 - reserved */
+    pub collided: c_int,   /* COL - tx collided >= 1 times */
+    pub aborted: c_int,    /* ABT - aborted due to excessive collisions */
+    pub no_carrier: c_int, /* CRS - carrier-sense lost */
+    pub fifo_ur: c_int,    /* FU  - FIFO underrun */
+    pub cd_hbeat: c_int,   /* CDH - no tx cd-heartbeat from transceiver */
+    pub ow_coll: c_int,    /* OWC - out-of-window collision */
 }
 
 /* Receive Configuration Register - 0ch write */
 #[repr(C)]
-struct RCR_t {
-    errors_ok: c_int, /* SEP - accept pkts with rx errors */
-    runts_ok: c_int,  /* AR  - accept < 64-byte runts */
-    broadcast: c_int, /* AB  - accept eth broadcast address */
-    multicast: c_int, /* AM  - check mcast hash array */
-    promisc: c_int,   /* PRO - accept all packets */
-    monitor: c_int,   /* MON - check pkts, but don't rx */
-    reserved: u8,     /* D6,D7 - reserved */
+pub struct RCR_t {
+    pub errors_ok: c_int, /* SEP - accept pkts with rx errors */
+    pub runts_ok: c_int,  /* AR  - accept < 64-byte runts */
+    pub broadcast: c_int, /* AB  - accept eth broadcast address */
+    pub multicast: c_int, /* AM  - check mcast hash array */
+    pub promisc: c_int,   /* PRO - accept all packets */
+    pub monitor: c_int,   /* MON - check pkts, but don't rx */
+    pub reserved: u8,     /* D6,D7 - reserved */
 }
 
 /* Receive Status Register - 0ch read */
 #[repr(C)]
-struct RSR_t {
-    rx_ok: c_int,       /* PRX - rx complete without error */
-    bad_crc: c_int,     /* CRC - Bad CRC detected */
-    bad_falign: c_int,  /* FAE - frame alignment error */
-    fifo_or: c_int,     /* FO  - FIFO overrun */
-    rx_missed: c_int,   /* MPA - missed packet error */
-    rx_mbit: c_int,     /* PHY - unicast or mcast/bcast address match */
-    rx_disabled: c_int, /* DIS - set when in monitor mode */
-    deferred: c_int,    /* DFR - collision active */
+pub struct RSR_t {
+    pub rx_ok: c_int,       /* PRX - rx complete without error */
+    pub bad_crc: c_int,     /* CRC - Bad CRC detected */
+    pub bad_falign: c_int,  /* FAE - frame alignment error */
+    pub fifo_or: c_int,     /* FO  - FIFO overrun */
+    pub rx_missed: c_int,   /* MPA - missed packet error */
+    pub rx_mbit: c_int,     /* PHY - unicast or mcast/bcast address match */
+    pub rx_disabled: c_int, /* DIS - set when in monitor mode */
+    pub deferred: c_int,    /* DFR - collision active */
 }
 #[repr(C)]
 pub struct dp8390_t {
     /* Page 0 */
-    CR: CR_t,
-    ISR: ISR_t,
-    IMR: IMR_t,
-    DCR: DCR_t,
-    TCR: TCR_t,
-    TSR: TSR_t,
-    RCR: RCR_t,
-    RSR: RSR_t,
+    pub CR: CR_t,
+    pub ISR: ISR_t,
+    pub IMR: IMR_t,
+    pub DCR: DCR_t,
+    pub TCR: TCR_t,
+    pub TSR: TSR_t,
+    pub RCR: RCR_t,
+    pub RSR: RSR_t,
 
-    local_dma: u16,    /* 01,02h read ; current local DMA addr */
-    page_start: u8,    /* 01h write ; page start regr */
-    page_stop: u8,     /* 02h write ; page stop regr */
-    bound_ptr: u8,     /* 03h read/write ; boundary pointer */
-    tx_page_start: u8, /* 04h write ; transmit page start reg */
-    num_coll: u8,      /* 05h read  ; number-of-collisions reg */
-    tx_bytes: u16,     /* 05,06h write ; transmit byte-count reg */
-    fifo: u8,          /* 06h read  ; FIFO */
-    remote_dma: u16,   /* 08,09h read ; current remote DMA addr */
-    remote_start: u16, /* 08,09h write ; remote start address reg */
-    remote_bytes: u16, /* 0a,0bh write ; remote byte-count reg */
-    tallycnt_0: u8,    /* 0dh read  ; tally ctr 0 (frame align errs) */
-    tallycnt_1: u8,    /* 0eh read  ; tally ctr 1 (CRC errors) */
-    tallycnt_2: u8,    /* 0fh read  ; tally ctr 2 (missed pkt errs) */
+    pub local_dma: u16,    /* 01,02h read ; current local DMA addr */
+    pub page_start: u8,    /* 01h write ; page start regr */
+    pub page_stop: u8,     /* 02h write ; page stop regr */
+    pub bound_ptr: u8,     /* 03h read/write ; boundary pointer */
+    pub tx_page_start: u8, /* 04h write ; transmit page start reg */
+    pub num_coll: u8,      /* 05h read  ; number-of-collisions reg */
+    pub tx_bytes: u16,     /* 05,06h write ; transmit byte-count reg */
+    pub fifo: u8,          /* 06h read  ; FIFO */
+    pub remote_dma: u16,   /* 08,09h read ; current remote DMA addr */
+    pub remote_start: u16, /* 08,09h write ; remote start address reg */
+    pub remote_bytes: u16, /* 0a,0bh write ; remote byte-count reg */
+    pub tallycnt_0: u8,    /* 0dh read  ; tally ctr 0 (frame align errs) */
+    pub tallycnt_1: u8,    /* 0eh read  ; tally ctr 1 (CRC errors) */
+    pub tallycnt_2: u8,    /* 0fh read  ; tally ctr 2 (missed pkt errs) */
 
     /* Page 1 */
 
     /*   Command Register 00h (repeated) */
-    physaddr: [u8; 6], /* 01-06h read/write ; MAC address */
-    curr_page: u8,     /* 07h read/write ; current page register */
-    mchash: [u8; 8],   /* 08-0fh read/write ; multicast hash array */
+    pub physaddr: [u8; 6], /* 01-06h read/write ; MAC address */
+    pub curr_page: u8,     /* 07h read/write ; current page register */
+    pub mchash: [u8; 8],   /* 08-0fh read/write ; multicast hash array */
 
     /* Page 2  - diagnostic use only */
 
@@ -170,32 +170,32 @@ pub struct dp8390_t {
     *   Data Configuration Register 0eh read (repeated)
     *   Interrupt Mask Register 0fh read (repeated)
     */
-    rempkt_ptr: u8,   /* 03h read/write ; rmt next-pkt ptr */
-    localpkt_ptr: u8, /* 05h read/write ; lcl next-pkt ptr */
-    address_cnt: u16, /* 06,07h read/write ; address cter */
+    pub rempkt_ptr: u8,   /* 03h read/write ; rmt next-pkt ptr */
+    pub localpkt_ptr: u8, /* 05h read/write ; lcl next-pkt ptr */
+    pub address_cnt: u16, /* 06,07h read/write ; address cter */
 
     /* Page 3  - should never be modified. */
 
     /* DP8390 memory */
-    mem: *mut u8, /* on-chip packet memory */
+    pub mem: *mut u8, /* on-chip packet memory */
 
-    macaddr: [u8; 32], /* ASIC ROM'd MAC address, even bytes */
-    macaddr_size: u8,  /* Defaults to 16 but can be 32 */
-    flags: u8,         /* Flags affecting some behaviors. */
-    id0: u8,           /* 0x50 for the Realtek NIC's, otherwise
-                       0xFF. */
-    id1: u8, /* 0x70 for the RTL8019AS, 0x43 for the
-             RTL8029AS, otherwise 0xFF. */
-    mem_size: c_int,
-    mem_start: c_int,
-    mem_end: c_int,
+    pub macaddr: [u8; 32], /* ASIC ROM'd MAC address, even bytes */
+    pub macaddr_size: u8,  /* Defaults to 16 but can be 32 */
+    pub flags: u8,         /* Flags affecting some behaviors. */
+    pub id0: u8,           /* 0x50 for the Realtek NIC's, otherwise
+                           0xFF. */
+    pub id1: u8, /* 0x70 for the RTL8019AS, 0x43 for the
+                 RTL8029AS, otherwise 0xFF. */
+    pub mem_size: c_int,
+    pub mem_start: c_int,
+    pub mem_end: c_int,
 
-    tx_timer_index: c_int,
-    tx_timer_active: c_int,
+    pub tx_timer_index: c_int,
+    pub tx_timer_active: c_int,
 
-    r#priv: *mut c_void,
+    pub r#priv: *mut c_void,
 
-    interrupt: Option<unsafe extern "C" fn(r#priv: *mut c_void, set: c_int)>,
+    pub interrupt: Option<unsafe extern "C" fn(r#priv: *mut c_void, set: c_int)>,
 }
 
 /*
@@ -367,7 +367,7 @@ pub unsafe extern "C" fn dp8390_write_cr(dev: *mut dp8390_t, mut val: u32) {
         }
     } else if (val & 0x04) != 0 {
         if (*dev).CR.stop != 0
-            || ((*dev).CR.start == 0 && ((*dev).flags as i32 & DP8390_FLAG_CHECK_CR) != 0)
+            || ((*dev).CR.start == 0 && ((*dev).flags & DP8390_FLAG_CHECK_CR) != 0)
         {
             if (*dev).tx_bytes == 0
             /* njh@bandsman.co.uk */
@@ -406,7 +406,7 @@ pub unsafe extern "C" fn dp8390_write_cr(dev: *mut dp8390_t, mut val: u32) {
         (*dev).ISR.rdma_done = 1;
         if (*dev).IMR.rdma_inte != 0 && (*dev).interrupt.is_some() {
             (*dev).interrupt.unwrap()((*dev).r#priv, 1);
-            if ((*dev).flags as i32 & DP8390_FLAG_CLEAR_IRQ) != 0 {
+            if ((*dev).flags & DP8390_FLAG_CLEAR_IRQ) != 0 {
                 (*dev).interrupt.unwrap()((*dev).r#priv, 0);
             }
         }

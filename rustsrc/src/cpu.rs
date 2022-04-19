@@ -153,97 +153,97 @@ pub const CPU_FEATURE_3DNOW: u32 = 64;
 pub const FPU_CW_Reserved_Bits: u32 = 57536;
 pub const SMHR_VALID: u32 = 1;
 pub const SMHR_ADDR_MASK: u32 = 4294967292;
-pub const FPU_NONE: ::std::os::raw::c_uint = 0;
-pub const FPU_8087: ::std::os::raw::c_uint = 1;
-pub const FPU_287: ::std::os::raw::c_uint = 2;
-pub const FPU_287XL: ::std::os::raw::c_uint = 3;
-pub const FPU_387: ::std::os::raw::c_uint = 4;
-pub const FPU_487SX: ::std::os::raw::c_uint = 5;
-pub const FPU_INTERNAL: ::std::os::raw::c_uint = 6;
-pub type _bindgen_ty_1 = ::std::os::raw::c_uint;
-pub const CPU_8088: ::std::os::raw::c_uint = 1;
-pub const CPU_8086: ::std::os::raw::c_uint = 2;
-pub const CPU_286: ::std::os::raw::c_uint = 3;
-pub const CPU_386SX: ::std::os::raw::c_uint = 4;
-pub const CPU_IBM386SLC: ::std::os::raw::c_uint = 5;
-pub const CPU_IBM486SLC: ::std::os::raw::c_uint = 6;
-pub const CPU_386DX: ::std::os::raw::c_uint = 7;
-pub const CPU_IBM486BL: ::std::os::raw::c_uint = 8;
-pub const CPU_RAPIDCAD: ::std::os::raw::c_uint = 9;
-pub const CPU_486SLC: ::std::os::raw::c_uint = 10;
-pub const CPU_486DLC: ::std::os::raw::c_uint = 11;
-pub const CPU_i486SX: ::std::os::raw::c_uint = 12;
-pub const CPU_Am486SX: ::std::os::raw::c_uint = 13;
-pub const CPU_Cx486S: ::std::os::raw::c_uint = 14;
-pub const CPU_i486DX: ::std::os::raw::c_uint = 15;
-pub const CPU_Am486DX: ::std::os::raw::c_uint = 16;
-pub const CPU_Am486DXL: ::std::os::raw::c_uint = 17;
-pub const CPU_Cx486DX: ::std::os::raw::c_uint = 18;
-pub const CPU_STPC: ::std::os::raw::c_uint = 19;
-pub const CPU_i486SX_SLENH: ::std::os::raw::c_uint = 20;
-pub const CPU_i486DX_SLENH: ::std::os::raw::c_uint = 21;
-pub const CPU_ENH_Am486DX: ::std::os::raw::c_uint = 22;
-pub const CPU_Cx5x86: ::std::os::raw::c_uint = 23;
-pub const CPU_P24T: ::std::os::raw::c_uint = 24;
-pub const CPU_WINCHIP: ::std::os::raw::c_uint = 25;
-pub const CPU_WINCHIP2: ::std::os::raw::c_uint = 26;
-pub const CPU_PENTIUM: ::std::os::raw::c_uint = 27;
-pub const CPU_PENTIUMMMX: ::std::os::raw::c_uint = 28;
-pub const CPU_Cx6x86: ::std::os::raw::c_uint = 29;
-pub const CPU_Cx6x86MX: ::std::os::raw::c_uint = 30;
-pub const CPU_Cx6x86L: ::std::os::raw::c_uint = 31;
-pub const CPU_CxGX1: ::std::os::raw::c_uint = 32;
-pub const CPU_K5: ::std::os::raw::c_uint = 33;
-pub const CPU_5K86: ::std::os::raw::c_uint = 34;
-pub const CPU_K6: ::std::os::raw::c_uint = 35;
-pub const CPU_K6_2: ::std::os::raw::c_uint = 36;
-pub const CPU_K6_2C: ::std::os::raw::c_uint = 37;
-pub const CPU_K6_3: ::std::os::raw::c_uint = 38;
-pub const CPU_K6_2P: ::std::os::raw::c_uint = 39;
-pub const CPU_K6_3P: ::std::os::raw::c_uint = 40;
-pub const CPU_CYRIX3S: ::std::os::raw::c_uint = 41;
-pub const CPU_PENTIUMPRO: ::std::os::raw::c_uint = 42;
-pub const CPU_PENTIUM2: ::std::os::raw::c_uint = 43;
-pub const CPU_PENTIUM2D: ::std::os::raw::c_uint = 44;
-pub type _bindgen_ty_2 = ::std::os::raw::c_uint;
-pub const CPU_PKG_8088: ::std::os::raw::c_uint = 1;
-pub const CPU_PKG_8088_EUROPC: ::std::os::raw::c_uint = 2;
-pub const CPU_PKG_8086: ::std::os::raw::c_uint = 4;
-pub const CPU_PKG_286: ::std::os::raw::c_uint = 8;
-pub const CPU_PKG_386SX: ::std::os::raw::c_uint = 16;
-pub const CPU_PKG_386DX: ::std::os::raw::c_uint = 32;
-pub const CPU_PKG_M6117: ::std::os::raw::c_uint = 64;
-pub const CPU_PKG_386SLC_IBM: ::std::os::raw::c_uint = 128;
-pub const CPU_PKG_486SLC: ::std::os::raw::c_uint = 256;
-pub const CPU_PKG_486SLC_IBM: ::std::os::raw::c_uint = 512;
-pub const CPU_PKG_486BL: ::std::os::raw::c_uint = 1024;
-pub const CPU_PKG_486DLC: ::std::os::raw::c_uint = 2048;
-pub const CPU_PKG_SOCKET1: ::std::os::raw::c_uint = 4096;
-pub const CPU_PKG_SOCKET3: ::std::os::raw::c_uint = 8192;
-pub const CPU_PKG_SOCKET3_PC330: ::std::os::raw::c_uint = 16384;
-pub const CPU_PKG_STPC: ::std::os::raw::c_uint = 32768;
-pub const CPU_PKG_SOCKET4: ::std::os::raw::c_uint = 65536;
-pub const CPU_PKG_SOCKET5_7: ::std::os::raw::c_uint = 131072;
-pub const CPU_PKG_SOCKET8: ::std::os::raw::c_uint = 262144;
-pub const CPU_PKG_SLOT1: ::std::os::raw::c_uint = 524288;
-pub const CPU_PKG_SLOT2: ::std::os::raw::c_uint = 1048576;
-pub const CPU_PKG_SOCKET370: ::std::os::raw::c_uint = 2097152;
-pub const CPU_PKG_EBGA368: ::std::os::raw::c_uint = 4194304;
-pub type _bindgen_ty_3 = ::std::os::raw::c_uint;
+pub const FPU_NONE: libc::c_uint = 0;
+pub const FPU_8087: libc::c_uint = 1;
+pub const FPU_287: libc::c_uint = 2;
+pub const FPU_287XL: libc::c_uint = 3;
+pub const FPU_387: libc::c_uint = 4;
+pub const FPU_487SX: libc::c_uint = 5;
+pub const FPU_INTERNAL: libc::c_uint = 6;
+pub type _bindgen_ty_1 = libc::c_uint;
+pub const CPU_8088: libc::c_uint = 1;
+pub const CPU_8086: libc::c_uint = 2;
+pub const CPU_286: libc::c_uint = 3;
+pub const CPU_386SX: libc::c_uint = 4;
+pub const CPU_IBM386SLC: libc::c_uint = 5;
+pub const CPU_IBM486SLC: libc::c_uint = 6;
+pub const CPU_386DX: libc::c_uint = 7;
+pub const CPU_IBM486BL: libc::c_uint = 8;
+pub const CPU_RAPIDCAD: libc::c_uint = 9;
+pub const CPU_486SLC: libc::c_uint = 10;
+pub const CPU_486DLC: libc::c_uint = 11;
+pub const CPU_i486SX: libc::c_uint = 12;
+pub const CPU_Am486SX: libc::c_uint = 13;
+pub const CPU_Cx486S: libc::c_uint = 14;
+pub const CPU_i486DX: libc::c_uint = 15;
+pub const CPU_Am486DX: libc::c_uint = 16;
+pub const CPU_Am486DXL: libc::c_uint = 17;
+pub const CPU_Cx486DX: libc::c_uint = 18;
+pub const CPU_STPC: libc::c_uint = 19;
+pub const CPU_i486SX_SLENH: libc::c_uint = 20;
+pub const CPU_i486DX_SLENH: libc::c_uint = 21;
+pub const CPU_ENH_Am486DX: libc::c_uint = 22;
+pub const CPU_Cx5x86: libc::c_uint = 23;
+pub const CPU_P24T: libc::c_uint = 24;
+pub const CPU_WINCHIP: libc::c_uint = 25;
+pub const CPU_WINCHIP2: libc::c_uint = 26;
+pub const CPU_PENTIUM: libc::c_uint = 27;
+pub const CPU_PENTIUMMMX: libc::c_uint = 28;
+pub const CPU_Cx6x86: libc::c_uint = 29;
+pub const CPU_Cx6x86MX: libc::c_uint = 30;
+pub const CPU_Cx6x86L: libc::c_uint = 31;
+pub const CPU_CxGX1: libc::c_uint = 32;
+pub const CPU_K5: libc::c_uint = 33;
+pub const CPU_5K86: libc::c_uint = 34;
+pub const CPU_K6: libc::c_uint = 35;
+pub const CPU_K6_2: libc::c_uint = 36;
+pub const CPU_K6_2C: libc::c_uint = 37;
+pub const CPU_K6_3: libc::c_uint = 38;
+pub const CPU_K6_2P: libc::c_uint = 39;
+pub const CPU_K6_3P: libc::c_uint = 40;
+pub const CPU_CYRIX3S: libc::c_uint = 41;
+pub const CPU_PENTIUMPRO: libc::c_uint = 42;
+pub const CPU_PENTIUM2: libc::c_uint = 43;
+pub const CPU_PENTIUM2D: libc::c_uint = 44;
+pub type _bindgen_ty_2 = libc::c_uint;
+pub const CPU_PKG_8088: libc::c_uint = 1;
+pub const CPU_PKG_8088_EUROPC: libc::c_uint = 2;
+pub const CPU_PKG_8086: libc::c_uint = 4;
+pub const CPU_PKG_286: libc::c_uint = 8;
+pub const CPU_PKG_386SX: libc::c_uint = 16;
+pub const CPU_PKG_386DX: libc::c_uint = 32;
+pub const CPU_PKG_M6117: libc::c_uint = 64;
+pub const CPU_PKG_386SLC_IBM: libc::c_uint = 128;
+pub const CPU_PKG_486SLC: libc::c_uint = 256;
+pub const CPU_PKG_486SLC_IBM: libc::c_uint = 512;
+pub const CPU_PKG_486BL: libc::c_uint = 1024;
+pub const CPU_PKG_486DLC: libc::c_uint = 2048;
+pub const CPU_PKG_SOCKET1: libc::c_uint = 4096;
+pub const CPU_PKG_SOCKET3: libc::c_uint = 8192;
+pub const CPU_PKG_SOCKET3_PC330: libc::c_uint = 16384;
+pub const CPU_PKG_STPC: libc::c_uint = 32768;
+pub const CPU_PKG_SOCKET4: libc::c_uint = 65536;
+pub const CPU_PKG_SOCKET5_7: libc::c_uint = 131072;
+pub const CPU_PKG_SOCKET8: libc::c_uint = 262144;
+pub const CPU_PKG_SLOT1: libc::c_uint = 524288;
+pub const CPU_PKG_SLOT2: libc::c_uint = 1048576;
+pub const CPU_PKG_SOCKET370: libc::c_uint = 2097152;
+pub const CPU_PKG_EBGA368: libc::c_uint = 4194304;
+pub type _bindgen_ty_3 = libc::c_uint;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct FPU {
-    pub name: *const ::std::os::raw::c_char,
-    pub internal_name: *const ::std::os::raw::c_char,
-    pub type_: ::std::os::raw::c_int,
+    pub name: *const libc::c_char,
+    pub internal_name: *const libc::c_char,
+    pub type_: libc::c_int,
 }
 
 #[repr(C)]
 pub struct CPU {
-    pub name: *const ::std::os::raw::c_char,
+    pub name: *const libc::c_char,
     pub cpu_type: u64,
     pub fpus: *const FPU,
-    pub rspeed: ::std::os::raw::c_int,
+    pub rspeed: libc::c_int,
     pub multi: f64,
     pub voltage: u16,
     pub edx_reset: u32,
@@ -260,24 +260,24 @@ pub struct CPU {
 #[repr(C)]
 pub struct cpu_family_t {
     pub package: u32,
-    pub manufacturer: *const ::std::os::raw::c_char,
-    pub name: *const ::std::os::raw::c_char,
-    pub internal_name: *const ::std::os::raw::c_char,
+    pub manufacturer: *const libc::c_char,
+    pub name: *const libc::c_char,
+    pub internal_name: *const libc::c_char,
     pub cpus: *const CPU,
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct cpu_legacy_table_t {
-    pub family: *const ::std::os::raw::c_char,
-    pub rspeed: ::std::os::raw::c_int,
+    pub family: *const libc::c_char,
+    pub rspeed: libc::c_int,
     pub multi: f64,
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct cpu_legacy_machine_t {
-    pub machine: *const ::std::os::raw::c_char,
+    pub machine: *const libc::c_char,
     pub tables: *mut *const cpu_legacy_table_t,
 }
 
@@ -303,7 +303,7 @@ pub struct x86seg {
     pub seg: u16,
     pub limit_low: u32,
     pub limit_high: u32,
-    pub checked: ::std::os::raw::c_int,
+    pub checked: libc::c_int,
 }
 
 #[repr(C)]
@@ -377,21 +377,21 @@ pub struct cpu_state_t {
     pub tag: [u8; 8usize],
     pub ea_seg: *mut x86seg,
     pub eaaddr: u32,
-    pub flags_op: ::std::os::raw::c_int,
+    pub flags_op: libc::c_int,
     pub flags_res: u32,
     pub flags_op1: u32,
     pub flags_op2: u32,
     pub pc: u32,
     pub oldpc: u32,
     pub op32: u32,
-    pub TOP: ::std::os::raw::c_int,
+    pub TOP: libc::c_int,
     pub rm_data: cpu_state_t__bindgen_ty_1,
     pub ssegs: u8,
     pub ismmx: u8,
     pub abrt: u8,
     pub _smi_line: u8,
-    pub _cycles: ::std::os::raw::c_int,
-    pub _in_smm: ::std::os::raw::c_int,
+    pub _cycles: libc::c_int,
+    pub _in_smm: libc::c_int,
     pub npxs: u16,
     pub npxc: u16,
     pub ST: [f64; 8usize],
@@ -446,28 +446,28 @@ extern "C" {
     pub static mut cpu_s: *mut CPU;
 }
 extern "C" {
-    pub static mut cpu_override: ::std::os::raw::c_int;
+    pub static mut cpu_override: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_isintel: ::std::os::raw::c_int;
+    pub static mut cpu_isintel: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_iscyrix: ::std::os::raw::c_int;
+    pub static mut cpu_iscyrix: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_16bitbus: ::std::os::raw::c_int;
+    pub static mut cpu_16bitbus: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_64bitbus: ::std::os::raw::c_int;
+    pub static mut cpu_64bitbus: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_busspeed: ::std::os::raw::c_int;
+    pub static mut cpu_busspeed: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_pci_speed: ::std::os::raw::c_int;
+    pub static mut cpu_pci_speed: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_multi: ::std::os::raw::c_int;
+    pub static mut cpu_multi: libc::c_int;
 }
 extern "C" {
     pub static mut cpu_dmulti: f64;
@@ -476,64 +476,64 @@ extern "C" {
     pub static mut fpu_multi: f64;
 }
 extern "C" {
-    pub static mut cpu_cyrix_alignment: ::std::os::raw::c_int;
+    pub static mut cpu_cyrix_alignment: libc::c_int;
 }
 extern "C" {
-    pub static mut is8086: ::std::os::raw::c_int;
+    pub static mut is8086: libc::c_int;
 }
 extern "C" {
-    pub static mut is286: ::std::os::raw::c_int;
+    pub static mut is286: libc::c_int;
 }
 extern "C" {
-    pub static mut is386: ::std::os::raw::c_int;
+    pub static mut is386: libc::c_int;
 }
 extern "C" {
-    pub static mut is486: ::std::os::raw::c_int;
+    pub static mut is486: libc::c_int;
 }
 extern "C" {
-    pub static mut is_am486: ::std::os::raw::c_int;
+    pub static mut is_am486: libc::c_int;
 }
 extern "C" {
-    pub static mut is_am486dxl: ::std::os::raw::c_int;
+    pub static mut is_am486dxl: libc::c_int;
 }
 extern "C" {
-    pub static mut is_pentium: ::std::os::raw::c_int;
+    pub static mut is_pentium: libc::c_int;
 }
 extern "C" {
-    pub static mut is_k5: ::std::os::raw::c_int;
+    pub static mut is_k5: libc::c_int;
 }
 extern "C" {
-    pub static mut is_k6: ::std::os::raw::c_int;
+    pub static mut is_k6: libc::c_int;
 }
 extern "C" {
-    pub static mut is_p6: ::std::os::raw::c_int;
+    pub static mut is_p6: libc::c_int;
 }
 extern "C" {
-    pub static mut is_cxsmm: ::std::os::raw::c_int;
+    pub static mut is_cxsmm: libc::c_int;
 }
 extern "C" {
-    pub static mut hascache: ::std::os::raw::c_int;
+    pub static mut hascache: libc::c_int;
 }
 extern "C" {
-    pub static mut isibm486: ::std::os::raw::c_int;
+    pub static mut isibm486: libc::c_int;
 }
 extern "C" {
-    pub static mut is_rapidcad: ::std::os::raw::c_int;
+    pub static mut is_rapidcad: libc::c_int;
 }
 extern "C" {
-    pub static mut hasfpu: ::std::os::raw::c_int;
+    pub static mut hasfpu: libc::c_int;
 }
 extern "C" {
     pub static mut cpu_features: u32;
 }
 extern "C" {
-    pub static mut smi_latched: ::std::os::raw::c_int;
+    pub static mut smi_latched: libc::c_int;
 }
 extern "C" {
-    pub static mut smm_in_hlt: ::std::os::raw::c_int;
+    pub static mut smm_in_hlt: libc::c_int;
 }
 extern "C" {
-    pub static mut smi_block: ::std::os::raw::c_int;
+    pub static mut smi_block: libc::c_int;
 }
 extern "C" {
     pub static mut cpu_cur_status: u32;
@@ -551,22 +551,22 @@ extern "C" {
     pub static mut opcode: u8;
 }
 extern "C" {
-    pub static mut cgate16: ::std::os::raw::c_int;
+    pub static mut cgate16: libc::c_int;
 }
 extern "C" {
-    pub static mut cpl_override: ::std::os::raw::c_int;
+    pub static mut cpl_override: libc::c_int;
 }
 extern "C" {
-    pub static mut CPUID: ::std::os::raw::c_int;
+    pub static mut CPUID: libc::c_int;
 }
 extern "C" {
     pub static mut xt_cpu_multi: u64;
 }
 extern "C" {
-    pub static mut isa_cycles: ::std::os::raw::c_int;
+    pub static mut isa_cycles: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_inited: ::std::os::raw::c_int;
+    pub static mut cpu_inited: libc::c_int;
 }
 extern "C" {
     pub static mut oldds: u32;
@@ -662,157 +662,157 @@ extern "C" {
     pub static mut _oldds: x86seg;
 }
 extern "C" {
-    pub static mut cpu_cycles_read: ::std::os::raw::c_int;
+    pub static mut cpu_cycles_read: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_cycles_read_l: ::std::os::raw::c_int;
+    pub static mut cpu_cycles_read_l: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_cycles_write: ::std::os::raw::c_int;
+    pub static mut cpu_cycles_write: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_cycles_write_l: ::std::os::raw::c_int;
+    pub static mut cpu_cycles_write_l: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_prefetch_cycles: ::std::os::raw::c_int;
+    pub static mut cpu_prefetch_cycles: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_prefetch_width: ::std::os::raw::c_int;
+    pub static mut cpu_prefetch_width: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_mem_prefetch_cycles: ::std::os::raw::c_int;
+    pub static mut cpu_mem_prefetch_cycles: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_rom_prefetch_cycles: ::std::os::raw::c_int;
+    pub static mut cpu_rom_prefetch_cycles: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_waitstates: ::std::os::raw::c_int;
+    pub static mut cpu_waitstates: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_cache_int_enabled: ::std::os::raw::c_int;
+    pub static mut cpu_cache_int_enabled: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_cache_ext_enabled: ::std::os::raw::c_int;
+    pub static mut cpu_cache_ext_enabled: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_isa_speed: ::std::os::raw::c_int;
+    pub static mut cpu_isa_speed: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_agp_speed: ::std::os::raw::c_int;
+    pub static mut cpu_agp_speed: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_rr: ::std::os::raw::c_int;
+    pub static mut timing_rr: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_mr: ::std::os::raw::c_int;
+    pub static mut timing_mr: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_mrl: ::std::os::raw::c_int;
+    pub static mut timing_mrl: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_rm: ::std::os::raw::c_int;
+    pub static mut timing_rm: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_rml: ::std::os::raw::c_int;
+    pub static mut timing_rml: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_mm: ::std::os::raw::c_int;
+    pub static mut timing_mm: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_mml: ::std::os::raw::c_int;
+    pub static mut timing_mml: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_bt: ::std::os::raw::c_int;
+    pub static mut timing_bt: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_bnt: ::std::os::raw::c_int;
+    pub static mut timing_bnt: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_int: ::std::os::raw::c_int;
+    pub static mut timing_int: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_int_rm: ::std::os::raw::c_int;
+    pub static mut timing_int_rm: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_int_v86: ::std::os::raw::c_int;
+    pub static mut timing_int_v86: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_int_pm: ::std::os::raw::c_int;
+    pub static mut timing_int_pm: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_int_pm_outer: ::std::os::raw::c_int;
+    pub static mut timing_int_pm_outer: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_iret_rm: ::std::os::raw::c_int;
+    pub static mut timing_iret_rm: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_iret_v86: ::std::os::raw::c_int;
+    pub static mut timing_iret_v86: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_iret_pm: ::std::os::raw::c_int;
+    pub static mut timing_iret_pm: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_iret_pm_outer: ::std::os::raw::c_int;
+    pub static mut timing_iret_pm_outer: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_call_rm: ::std::os::raw::c_int;
+    pub static mut timing_call_rm: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_call_pm: ::std::os::raw::c_int;
+    pub static mut timing_call_pm: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_call_pm_gate: ::std::os::raw::c_int;
+    pub static mut timing_call_pm_gate: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_call_pm_gate_inner: ::std::os::raw::c_int;
+    pub static mut timing_call_pm_gate_inner: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_retf_rm: ::std::os::raw::c_int;
+    pub static mut timing_retf_rm: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_retf_pm: ::std::os::raw::c_int;
+    pub static mut timing_retf_pm: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_retf_pm_outer: ::std::os::raw::c_int;
+    pub static mut timing_retf_pm_outer: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_jmp_rm: ::std::os::raw::c_int;
+    pub static mut timing_jmp_rm: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_jmp_pm: ::std::os::raw::c_int;
+    pub static mut timing_jmp_pm: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_jmp_pm_gate: ::std::os::raw::c_int;
+    pub static mut timing_jmp_pm_gate: libc::c_int;
 }
 extern "C" {
-    pub static mut timing_misaligned: ::std::os::raw::c_int;
+    pub static mut timing_misaligned: libc::c_int;
 }
 extern "C" {
-    pub static mut in_sys: ::std::os::raw::c_int;
+    pub static mut in_sys: libc::c_int;
 }
 extern "C" {
-    pub static mut unmask_a20_in_smm: ::std::os::raw::c_int;
+    pub static mut unmask_a20_in_smm: libc::c_int;
 }
 extern "C" {
-    pub static mut cycles_main: ::std::os::raw::c_int;
+    pub static mut cycles_main: libc::c_int;
 }
 extern "C" {
     pub static mut old_rammask: u32;
 }
 extern "C" {
-    pub static mut pic_pending: ::std::os::raw::c_int;
+    pub static mut pic_pending: libc::c_int;
 }
 extern "C" {
-    pub static mut is_vpc: ::std::os::raw::c_int;
+    pub static mut is_vpc: libc::c_int;
 }
 extern "C" {
-    pub static mut soft_reset_mask: ::std::os::raw::c_int;
+    pub static mut soft_reset_mask: libc::c_int;
 }
 extern "C" {
-    pub static mut alt_access: ::std::os::raw::c_int;
+    pub static mut alt_access: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_end_block_after_ins: ::std::os::raw::c_int;
+    pub static mut cpu_end_block_after_ins: libc::c_int;
 }
 extern "C" {
     pub static mut cpu_fast_off_count: u16;
@@ -824,7 +824,7 @@ extern "C" {
     pub static mut cpu_fast_off_flags: u32;
 }
 extern "C" {
-    pub fn cpu_has_feature(feature: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
+    pub fn cpu_has_feature(feature: libc::c_int) -> libc::c_int;
 }
 extern "C" {
     pub fn loadseg(seg: u16, s: *mut x86seg);
@@ -833,7 +833,7 @@ extern "C" {
     pub fn loadcs(seg: u16);
 }
 extern "C" {
-    pub fn cpu_current_pc(bufp: *mut ::std::os::raw::c_char) -> *mut ::std::os::raw::c_char;
+    pub fn cpu_current_pc(bufp: *mut libc::c_char) -> *mut libc::c_char;
 }
 extern "C" {
     pub fn cpu_update_waitstates();
@@ -845,16 +845,16 @@ extern "C" {
     pub fn cpu_close();
 }
 extern "C" {
-    pub fn cpu_set_isa_speed(speed: ::std::os::raw::c_int);
+    pub fn cpu_set_isa_speed(speed: libc::c_int);
 }
 extern "C" {
-    pub fn cpu_set_pci_speed(speed: ::std::os::raw::c_int);
+    pub fn cpu_set_pci_speed(speed: libc::c_int);
 }
 extern "C" {
-    pub fn cpu_set_isa_pci_div(div: ::std::os::raw::c_int);
+    pub fn cpu_set_isa_pci_div(div: libc::c_int);
 }
 extern "C" {
-    pub fn cpu_set_agp_speed(speed: ::std::os::raw::c_int);
+    pub fn cpu_set_agp_speed(speed: libc::c_int);
 }
 extern "C" {
     pub fn cpu_CPUID();
@@ -866,7 +866,7 @@ extern "C" {
     pub fn cpu_WRMSR();
 }
 extern "C" {
-    pub fn checkio(port: u32) -> ::std::os::raw::c_int;
+    pub fn checkio(port: u32) -> libc::c_int;
 }
 extern "C" {
     pub fn codegen_block_end();
@@ -878,28 +878,28 @@ extern "C" {
     pub fn cpu_set_edx();
 }
 extern "C" {
-    pub fn divl(val: u32) -> ::std::os::raw::c_int;
+    pub fn divl(val: u32) -> libc::c_int;
 }
 extern "C" {
-    pub fn execx86(cycs: ::std::os::raw::c_int);
+    pub fn execx86(cycs: libc::c_int);
 }
 extern "C" {
-    pub fn enter_smm(in_hlt: ::std::os::raw::c_int);
+    pub fn enter_smm(in_hlt: libc::c_int);
 }
 extern "C" {
-    pub fn enter_smm_check(in_hlt: ::std::os::raw::c_int);
+    pub fn enter_smm_check(in_hlt: libc::c_int);
 }
 extern "C" {
     pub fn leave_smm();
 }
 extern "C" {
-    pub fn exec386(cycs: ::std::os::raw::c_int);
+    pub fn exec386(cycs: libc::c_int);
 }
 extern "C" {
-    pub fn exec386_dynarec(cycs: ::std::os::raw::c_int);
+    pub fn exec386_dynarec(cycs: libc::c_int);
 }
 extern "C" {
-    pub fn idivl(val: i32) -> ::std::os::raw::c_int;
+    pub fn idivl(val: i32) -> libc::c_int;
 }
 extern "C" {
     pub fn loadcscall(seg: u16);
@@ -908,13 +908,13 @@ extern "C" {
     pub fn loadcsjmp(seg: u16, old_pc: u32);
 }
 extern "C" {
-    pub fn pmodeint(num: ::std::os::raw::c_int, soft: ::std::os::raw::c_int);
+    pub fn pmodeint(num: libc::c_int, soft: libc::c_int);
 }
 extern "C" {
-    pub fn pmoderetf(is32: ::std::os::raw::c_int, off: u16);
+    pub fn pmoderetf(is32: libc::c_int, off: u16);
 }
 extern "C" {
-    pub fn pmodeiret(is32: ::std::os::raw::c_int);
+    pub fn pmodeiret(is32: libc::c_int);
 }
 extern "C" {
     pub fn resetmcr();
@@ -935,34 +935,34 @@ extern "C" {
     pub fn hardresetx86();
 }
 extern "C" {
-    pub fn x86_int(num: ::std::os::raw::c_int);
+    pub fn x86_int(num: libc::c_int);
 }
 extern "C" {
-    pub fn x86_int_sw(num: ::std::os::raw::c_int);
+    pub fn x86_int_sw(num: libc::c_int);
 }
 extern "C" {
-    pub fn x86_int_sw_rm(num: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
+    pub fn x86_int_sw_rm(num: libc::c_int) -> libc::c_int;
 }
 extern "C" {
-    pub fn x86gpf(s: *mut ::std::os::raw::c_char, error: u16);
+    pub fn x86gpf(s: *mut libc::c_char, error: u16);
 }
 extern "C" {
-    pub fn x86np(s: *mut ::std::os::raw::c_char, error: u16);
+    pub fn x86np(s: *mut libc::c_char, error: u16);
 }
 extern "C" {
-    pub fn x86ss(s: *mut ::std::os::raw::c_char, error: u16);
+    pub fn x86ss(s: *mut libc::c_char, error: u16);
 }
 extern "C" {
-    pub fn x86ts(s: *mut ::std::os::raw::c_char, error: u16);
+    pub fn x86ts(s: *mut libc::c_char, error: u16);
 }
 extern "C" {
-    pub static mut cpu_effective: ::std::os::raw::c_int;
+    pub static mut cpu_effective: libc::c_int;
 }
 extern "C" {
-    pub static mut cpu_alt_reset: ::std::os::raw::c_int;
+    pub static mut cpu_alt_reset: libc::c_int;
 }
 extern "C" {
-    pub fn cpu_dynamic_switch(new_cpu: ::std::os::raw::c_int);
+    pub fn cpu_dynamic_switch(new_cpu: libc::c_int);
 }
 extern "C" {
     pub fn cpu_ven_reset();
@@ -971,60 +971,60 @@ extern "C" {
     pub fn update_tsc();
 }
 extern "C" {
-    pub fn sysenter(fetchdat: u32) -> ::std::os::raw::c_int;
+    pub fn sysenter(fetchdat: u32) -> libc::c_int;
 }
 extern "C" {
-    pub fn sysexit(fetchdat: u32) -> ::std::os::raw::c_int;
+    pub fn sysexit(fetchdat: u32) -> libc::c_int;
 }
 extern "C" {
-    pub fn syscall_op(fetchdat: u32) -> ::std::os::raw::c_int;
+    pub fn syscall_op(fetchdat: u32) -> libc::c_int;
 }
 extern "C" {
-    pub fn sysret(fetchdat: u32) -> ::std::os::raw::c_int;
+    pub fn sysret(fetchdat: u32) -> libc::c_int;
 }
 extern "C" {
-    pub fn cpu_get_family(internal_name: *const ::std::os::raw::c_char) -> *mut cpu_family_t;
+    pub fn cpu_get_family(internal_name: *const libc::c_char) -> *mut cpu_family_t;
 }
 extern "C" {
     pub fn cpu_is_eligible(
         cpu_family: *const cpu_family_t,
-        cpu: ::std::os::raw::c_int,
-        machine: ::std::os::raw::c_int,
+        cpu: libc::c_int,
+        machine: libc::c_int,
     ) -> u8;
 }
 extern "C" {
     pub fn cpu_family_is_eligible(
         cpu_family: *const cpu_family_t,
-        machine: ::std::os::raw::c_int,
+        machine: libc::c_int,
     ) -> u8;
 }
 extern "C" {
     pub fn fpu_get_type(
         cpu_family: *const cpu_family_t,
-        cpu: ::std::os::raw::c_int,
-        internal_name: *const ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
+        cpu: libc::c_int,
+        internal_name: *const libc::c_char,
+    ) -> libc::c_int;
 }
 extern "C" {
     pub fn fpu_get_internal_name(
         cpu_family: *const cpu_family_t,
-        cpu: ::std::os::raw::c_int,
-        type_: ::std::os::raw::c_int,
-    ) -> *const ::std::os::raw::c_char;
+        cpu: libc::c_int,
+        type_: libc::c_int,
+    ) -> *const libc::c_char;
 }
 extern "C" {
     pub fn fpu_get_name_from_index(
         cpu_family: *const cpu_family_t,
-        cpu: ::std::os::raw::c_int,
-        c: ::std::os::raw::c_int,
-    ) -> *const ::std::os::raw::c_char;
+        cpu: libc::c_int,
+        c: libc::c_int,
+    ) -> *const libc::c_char;
 }
 extern "C" {
     pub fn fpu_get_type_from_index(
         cpu_family: *const cpu_family_t,
-        cpu: ::std::os::raw::c_int,
-        c: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
+        cpu: libc::c_int,
+        c: libc::c_int,
+    ) -> libc::c_int;
 }
 extern "C" {
     pub fn cyrix_load_seg_descriptor(addr: u32, seg: *mut x86seg);
@@ -1056,13 +1056,13 @@ extern "C" {
     pub static mut addr64a_2: [u32; 8usize];
 }
 extern "C" {
-    pub static mut soft_reset_pci: ::std::os::raw::c_int;
+    pub static mut soft_reset_pci: libc::c_int;
 }
 extern "C" {
-    pub static mut reset_on_hlt: ::std::os::raw::c_int;
+    pub static mut reset_on_hlt: libc::c_int;
 }
 extern "C" {
-    pub static mut hlt_reset_pending: ::std::os::raw::c_int;
+    pub static mut hlt_reset_pending: libc::c_int;
 }
 extern "C" {
     pub static mut cyrix: cyrix_t;
@@ -1075,7 +1075,7 @@ extern "C" {
 }
 extern "C" {
     pub static mut cpu_exec:
-        ::std::option::Option<unsafe extern "C" fn(cycs: ::std::os::raw::c_int)>;
+        ::std::option::Option<unsafe extern "C" fn(cycs: libc::c_int)>;
 }
 extern "C" {
     pub static mut do_translate: u8;
@@ -1084,5 +1084,5 @@ extern "C" {
     pub static mut do_translate2: u8;
 }
 extern "C" {
-    pub fn reset_808x(hard: ::std::os::raw::c_int);
+    pub fn reset_808x(hard: libc::c_int);
 }

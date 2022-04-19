@@ -1,5 +1,5 @@
+use const_zero::const_zero;
 use libc::*;
-
 // device.h
 
 pub const CONFIG_END: c_int = -1;
@@ -32,27 +32,42 @@ pub const DEVICE_LPT: c_int = 0x2000; /* requires a parallel port */
 
 #[repr(C)]
 pub struct device_config_selection_t {
-    description: *const c_char,
-    value: c_int,
+    pub description: *const c_char,
+    pub value: c_int,
+}
+
+impl device_config_selection_t {
+    pub const fn empty() -> Self {
+        unsafe { const_zero!(device_config_selection_t) }
+    }
 }
 #[repr(C)]
 
 pub struct device_config_spinner_t {
-    min: i16,
-    max: i16,
-    step: i16,
+    pub min: i16,
+    pub max: i16,
+    pub step: i16,
 }
 #[repr(C)]
 
 pub struct device_config_t {
-    name: *const c_char,
-    description: *const c_char,
-    r#type: c_int,
-    default_string: *const c_char,
-    default_int: c_int,
-    file_filter: *const c_char,
-    spinner: device_config_spinner_t,
-    selection: [device_config_selection_t; 16],
+    pub name: *const c_char,
+    pub description: *const c_char,
+    pub r#type: c_int,
+    pub default_string: *const c_char,
+    pub default_int: c_int,
+    pub file_filter: *const c_char,
+    pub spinner: device_config_spinner_t,
+    pub selection: [device_config_selection_t; 16],
+}
+
+unsafe impl Send for device_config_t {}
+unsafe impl Sync for device_config_t {}
+
+impl device_config_t {
+    pub const fn empty() -> Self {
+        unsafe { const_zero::const_zero!(device_config_t) }
+    }
 }
 
 #[repr(C)]
