@@ -137,11 +137,8 @@ const net_none_device: device_t = device_t {
 
 extern "C" {
     pub static threec503_device: device_t;
-    pub static pcnet_am79c960_device: device_t;
-    pub static pcnet_am79c961_device: device_t;
     pub static ne1000_device: device_t;
     pub static ne2000_device: device_t;
-    pub static pcnet_am79c960_eb_device: device_t;
     pub static rtl8019as_device: device_t;
     pub static wd8003e_device: device_t;
     pub static wd8003eb_device: device_t;
@@ -150,22 +147,16 @@ extern "C" {
     pub static ethernext_mc_device: device_t;
     pub static wd8003eta_device: device_t;
     pub static wd8003ea_device: device_t;
-    pub static pcnet_am79c973_device: device_t;
-    pub static pcnet_am79c970a_device: device_t;
     pub static rtl8029as_device: device_t;
-    pub static pcnet_am79c960_vlb_device: device_t;
 }
 
-static net_cards: Lazy<[Arc<Mutex<netcard_t>>; 20]> = Lazy::new(|| {
+static net_cards: Lazy<[Arc<Mutex<netcard_t>>; 14]> = Lazy::new(|| {
     [
         // clang-format off
         netcard_t::new(&net_none_device),
         netcard_t::new(unsafe { &threec503_device }),
-        netcard_t::new(unsafe { &pcnet_am79c960_device }),
-        netcard_t::new(unsafe { &pcnet_am79c961_device }),
         netcard_t::new(unsafe { &ne1000_device }),
         netcard_t::new(unsafe { &ne2000_device }),
-        netcard_t::new(unsafe { &pcnet_am79c960_eb_device }),
         netcard_t::new(unsafe { &rtl8019as_device }),
         netcard_t::new(unsafe { &wd8003e_device }),
         netcard_t::new(unsafe { &wd8003eb_device }),
@@ -174,10 +165,7 @@ static net_cards: Lazy<[Arc<Mutex<netcard_t>>; 20]> = Lazy::new(|| {
         netcard_t::new(unsafe { &ethernext_mc_device }),
         netcard_t::new(unsafe { &wd8003eta_device }),
         netcard_t::new(unsafe { &wd8003ea_device }),
-        netcard_t::new(unsafe { &pcnet_am79c973_device }),
-        netcard_t::new(unsafe { &pcnet_am79c970a_device }),
         netcard_t::new(unsafe { &rtl8029as_device }),
-        netcard_t::new(unsafe { &pcnet_am79c960_vlb_device }),
         netcard_t::new(ptr::null()), // clang-format off
     ]
 });

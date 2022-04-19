@@ -14,7 +14,7 @@
 #
 
 add_library(net OBJECT net_pcap.c net_3c503.c
-    net_pcnet.c net_wd8003.c net_plip.c)
+    net_wd8003.c net_plip.c)
 
 if (HAIKU)
     target_link_libraries(86Box network)

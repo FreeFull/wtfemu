@@ -125,7 +125,6 @@ STUFF	:=
 # -DENABLE_NETWORK_LOG=N sets logging level at N.
 # -DENABLE_NE2K_LOG=N sets logging level at N.
 # -DENABLE_PCAP_LOG=N sets logging level at N.
-# -DENABLE_PCNET_LOG=N sets logging level at N.
 # -DENABLE_SLIRP_LOG=N sets logging level at N.
 # -DENABLE_WD_LOG=N sets logging level at N.
 # printer/ logging:

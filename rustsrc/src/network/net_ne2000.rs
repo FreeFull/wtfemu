@@ -1269,7 +1269,7 @@ unsafe extern "C" fn nic_init(info: *const device_t) -> *mut c_void {
         dev.eeprom.fill(0);
 
         if dev.board == NE2K_RTL8029AS {
-            dev.eeprom[0x02..].copy_from_slice(&dev.maclocal);
+            dev.eeprom[0x02..0x08].copy_from_slice(&dev.maclocal);
             dev.eeprom[0x76] = (PCI_DEVID & 0xff) as u8;
             dev.eeprom[0x7A] = (PCI_DEVID & 0xff) as u8;
             dev.eeprom[0x7E] = (PCI_DEVID & 0xff) as u8;
@@ -1281,7 +1281,7 @@ unsafe extern "C" fn nic_init(info: *const device_t) -> *mut c_void {
             dev.eeprom[0x79] = (PCI_VENDID >> 8) as u8;
             dev.eeprom[0x7D] = (PCI_VENDID >> 8) as u8;
         } else {
-            dev.eeprom[0x12..].copy_from_slice(&rtl8019as_pnp_rom);
+            dev.eeprom[0x12..rtl8019as_pnp_rom.len() + 0x12].copy_from_slice(&rtl8019as_pnp_rom);
 
             dev.pnp_card = isapnp_add_card(
                 dev.eeprom.as_mut_ptr().offset(0x12) as _,
