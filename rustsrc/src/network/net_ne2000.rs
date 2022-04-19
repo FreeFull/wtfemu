@@ -34,14 +34,11 @@
  *   USA.
  */
 
-use std::{
-    ffi::CStr,
-    mem::{size_of, size_of_val},
-    ptr,
-};
+use std::{ffi::CStr, ptr};
 
 use super::net_dp8390::*;
 use crate::{prelude::*, random::*};
+use const_zero::const_zero;
 use log::*;
 
 const _NE2K_NONE: i32 = 0;
@@ -127,7 +124,7 @@ const PCI_VENDID: u16 = 0x10ec; /* Realtek, Inc */
 const PCI_DEVID: u16 = 0x8029; /* RTL8029AS */
 const PCI_REGSIZE: usize = 256; /* size of PCI space */
 
-static rtl8019as_pnp_rom: &[u8] = &[
+const rtl8019as_pnp_rom: [u8; 75] = [
     0x4a, 0x8c, 0x80, 0x19, 0x00, 0x00, 0x00, 0x00,
     0x00, /* RTL8019, dummy checksum (filled in by isapnp_add_card) */
     0x0a, 0x10, 0x10, /* PnP version 1.0, vendor version 1.0 */
@@ -146,17 +143,15 @@ struct nic_t {
     dp8390: *mut dp8390_t,
     name: *const c_char,
     board: c_int,
-    is_pci: c_int,
-    _is_mca: c_int,
-    is_8bit: c_int,
+    is_pci: bool,
+    is_8bit: bool,
     base_address: u32,
     base_irq: c_int,
     bios_addr: u32,
     bios_size: u32,
     bios_mask: u32,
     card: c_int, /* PCI card slot */
-    has_bios: c_int,
-    _pad: c_int,
+    has_bios: bool,
     pci_bar: [bar_t; 2],
     pci_regs: [u8; PCI_REGSIZE],
     eeprom: [u8; 128], /* for RTL8029AS */
@@ -170,7 +165,6 @@ struct nic_t {
     config2: u8,
     config3: u8,
     _9346cr: u8,
-    _pad0: u32,
 
     /* POS registers, MCA boards only */
     pos_regs: [u8; 8],
@@ -179,7 +173,7 @@ struct nic_t {
 unsafe extern "C" fn nic_interrupt(r#priv: *mut c_void, set: c_int) {
     let dev: *mut nic_t = r#priv as _;
 
-    if (*dev).is_pci != 0 {
+    if (*dev).is_pci {
         if (set) != 0 {
             pci_set_irq((*dev).card as u8, PCI_INTA);
         } else {
@@ -222,7 +216,7 @@ unsafe extern "C" fn nic_soft_reset(r#priv: *mut c_void) {
  * after that, insw/outsw instructions can be used to move
  * the appropriate number of bytes to/from the device.
  */
-unsafe extern "C" fn asic_read(dev: *mut nic_t, off: u32, len: c_uint) -> u32 {
+unsafe fn asic_read(dev: *mut nic_t, off: u32, len: c_uint) -> u32 {
     let mut retval: u32 = 0;
 
     match off {
@@ -297,7 +291,7 @@ unsafe extern "C" fn asic_read(dev: *mut nic_t, off: u32, len: c_uint) -> u32 {
     return retval;
 }
 
-unsafe extern "C" fn asic_write(dev: *mut nic_t, off: u32, val: u32, len: c_uint) {
+unsafe fn asic_write(dev: *mut nic_t, off: u32, val: u32, len: c_uint) {
     trace!(
         "{:?}: ASIC write addr=0x{:x}, value=0x{:x}",
         CStr::from_ptr((*dev).name),
@@ -369,7 +363,7 @@ unsafe extern "C" fn asic_write(dev: *mut nic_t, off: u32, val: u32, len: c_uint
 }
 
 /* Writes to this page are illegal. */
-unsafe extern "C" fn page3_read(dev: *mut nic_t, off: u32, _len: c_uint) -> u32 {
+unsafe fn page3_read(dev: *mut nic_t, off: u32, _len: c_uint) -> u32 {
     if (*dev).board >= NE2K_RTL8019AS {
         match off {
             0x1 => {
@@ -427,7 +421,7 @@ unsafe extern "C" fn page3_read(dev: *mut nic_t, off: u32, _len: c_uint) -> u32 
     return 0x00;
 }
 
-unsafe extern "C" fn page3_write(dev: *mut nic_t, off: u32, val: u32, len: c_uint) {
+unsafe fn page3_write(dev: *mut nic_t, off: u32, val: u32, len: c_uint) {
     if (*dev).board >= NE2K_RTL8019AS {
         trace!(
             "{:?}: Page2 write to register 0x{:x}, len={}, value=0x{:x}",
@@ -472,7 +466,7 @@ unsafe extern "C" fn page3_write(dev: *mut nic_t, off: u32, val: u32, len: c_uin
     }
 }
 
-unsafe extern "C" fn nic_read(dev: *mut nic_t, addr: u32, len: c_uint) -> u32 {
+unsafe fn nic_read(dev: *mut nic_t, addr: u32, len: c_uint) -> u32 {
     let mut retval = 0;
     let off: c_int = addr as c_int - (*dev).base_address as c_int;
 
@@ -526,7 +520,7 @@ unsafe extern "C" fn nic_readl(addr: u16, r#priv: *mut c_void) -> u32 {
     return nic_read(r#priv as _, addr as u32, 4);
 }
 
-unsafe extern "C" fn nic_write(dev: *mut nic_t, addr: u32, val: u32, len: c_uint) {
+unsafe fn nic_write(dev: *mut nic_t, addr: u32, val: u32, len: c_uint) {
     let off: c_int = addr as c_int - (*dev).base_address as c_int;
 
     trace!(
@@ -643,8 +637,8 @@ unsafe extern "C" fn nic_pnp_write_vendor_reg(ld: u8, reg: u8, val: u8, r#priv: 
     }
 }
 
-unsafe extern "C" fn nic_ioset(dev: *mut nic_t, addr: u16) {
-    if ((*dev).is_pci) != 0 {
+unsafe fn nic_ioset(dev: *mut nic_t, addr: u16) {
+    if (*dev).is_pci {
         io_sethandler(
             addr,
             32,
@@ -668,7 +662,7 @@ unsafe extern "C" fn nic_ioset(dev: *mut nic_t, addr: u16) {
             None,
             dev as _,
         );
-        if ((*dev).is_8bit) != 0 {
+        if (*dev).is_8bit {
             io_sethandler(
                 addr + 16,
                 16,
@@ -696,8 +690,8 @@ unsafe extern "C" fn nic_ioset(dev: *mut nic_t, addr: u16) {
     }
 }
 
-unsafe extern "C" fn nic_ioremove(dev: *mut nic_t, addr: u16) {
-    if ((*dev).is_pci) != 0 {
+unsafe fn nic_ioremove(dev: *mut nic_t, addr: u16) {
+    if (*dev).is_pci {
         io_removehandler(
             addr,
             32,
@@ -721,7 +715,7 @@ unsafe extern "C" fn nic_ioremove(dev: *mut nic_t, addr: u16) {
             None,
             dev as _,
         );
-        if ((*dev).is_8bit) != 0 {
+        if (*dev).is_8bit {
             io_removehandler(
                 addr + 16,
                 16,
@@ -749,14 +743,14 @@ unsafe extern "C" fn nic_ioremove(dev: *mut nic_t, addr: u16) {
     }
 }
 
-unsafe extern "C" fn nic_update_bios(dev: *mut nic_t) {
+unsafe fn nic_update_bios(dev: *mut nic_t) {
     let mut reg_bios_enable: c_int = 1;
 
-    if (!(*dev).has_bios) != 0 {
+    if !(*dev).has_bios {
         return;
     }
 
-    if ((*dev).is_pci) != 0 {
+    if (*dev).is_pci {
         reg_bios_enable = (*dev).pci_bar[1].addr_regs.as_ref()[0] as i32 & 0x01;
     }
 
@@ -931,7 +925,7 @@ unsafe extern "C" fn nic_pci_write(func: c_int, addr: c_int, mut val: u8, r#priv
     }
 }
 
-unsafe extern "C" fn nic_rom_init(dev: *mut nic_t, s: *mut c_char) {
+unsafe fn nic_rom_init(dev: *mut nic_t, s: *mut c_char) {
     let temp: i64;
     let f: *mut FILE;
 
@@ -1023,7 +1017,7 @@ unsafe extern "C" fn nic_mca_write(port: c_int, val: u8, r#priv: *mut c_void) {
     (*dev).base_irq = irq[((*dev).pos_regs[2] as usize & 0xE) >> 1] as i32;
 
     (*dev).bios_addr = 0x0000;
-    (*dev).has_bios = 0;
+    (*dev).has_bios = false;
 
     /*
      * The PS/2 Model 80 BIOS always enables a card if it finds one,
@@ -1058,31 +1052,30 @@ unsafe extern "C" fn nic_mca_feedb(r#priv: *mut c_void) -> u8 {
 unsafe extern "C" fn nic_init(info: *const device_t) -> *mut c_void {
     let mut mac: u32;
     let mut nic_rom: *const c_char = ptr::null();
-    let dev: *mut nic_t = malloc(size_of::<nic_t>()) as _;
-    memset(dev as _, 0x00, size_of::<nic_t>());
-    (*dev).name = (*info).name;
-    (*dev).board = (*info).local as i32;
+    let mut dev = Box::new(const_zero!(nic_t));
+    dev.name = (*info).name;
+    dev.board = (*info).local as i32;
 
-    if (*dev).board >= NE2K_RTL8019AS {
-        (*dev).base_address = 0x340;
-        (*dev).base_irq = 12;
-        if (*dev).board == NE2K_RTL8029AS {
-            (*dev).bios_addr = 0xD0000;
-            (*dev).has_bios = device_get_config_int(b"bios\0".as_ptr() as _);
+    if dev.board >= NE2K_RTL8019AS {
+        dev.base_address = 0x340;
+        dev.base_irq = 12;
+        if dev.board == NE2K_RTL8029AS {
+            dev.bios_addr = 0xD0000;
+            dev.has_bios = device_get_config_int(b"bios\0".as_ptr() as _) != 0;
         } else {
-            (*dev).bios_addr = 0x00000;
-            (*dev).has_bios = 0;
+            dev.bios_addr = 0x00000;
+            dev.has_bios = false;
         }
     } else {
-        if (*dev).board != NE2K_ETHERNEXT_MC {
-            (*dev).base_address = device_get_config_hex16(b"base\0".as_ptr() as _) as u32;
-            (*dev).base_irq = device_get_config_int(b"irq\0".as_ptr() as _);
-            if (*dev).board == NE2K_NE2000 {
-                (*dev).bios_addr = device_get_config_hex20(b"bios_addr\0".as_ptr() as _) as u32;
-                (*dev).has_bios = ((*dev).bios_addr != 0) as i32;
+        if dev.board != NE2K_ETHERNEXT_MC {
+            dev.base_address = device_get_config_hex16(b"base\0".as_ptr() as _) as u32;
+            dev.base_irq = device_get_config_int(b"irq\0".as_ptr() as _);
+            if dev.board == NE2K_NE2000 {
+                dev.bios_addr = device_get_config_hex20(b"bios_addr\0".as_ptr() as _) as u32;
+                dev.has_bios = dev.bios_addr != 0;
             } else {
-                (*dev).bios_addr = 0x00000;
-                (*dev).has_bios = 0;
+                dev.bios_addr = 0x00000;
+                dev.has_bios = false;
             }
         } else {
             mca_add(
@@ -1090,7 +1083,7 @@ unsafe extern "C" fn nic_init(info: *const device_t) -> *mut c_void {
                 Some(nic_mca_write),
                 Some(nic_mca_feedb),
                 None,
-                dev as _,
+                &mut *dev as *mut _ as _,
             );
         }
     }
@@ -1101,233 +1094,216 @@ unsafe extern "C" fn nic_init(info: *const device_t) -> *mut c_void {
     /* Set up our BIA. */
     if (mac & 0xff000000) != 0 {
         /* Generate new local MAC. */
-        (*dev).maclocal[3] = random_generate();
-        (*dev).maclocal[4] = random_generate();
-        (*dev).maclocal[5] = random_generate();
-        mac = ((*dev).maclocal[3] as u32) << 16;
-        mac |= ((*dev).maclocal[4] as u32) << 8;
-        mac |= ((*dev).maclocal[5]) as u32;
+        dev.maclocal[3] = random_generate();
+        dev.maclocal[4] = random_generate();
+        dev.maclocal[5] = random_generate();
+        mac = (dev.maclocal[3] as u32) << 16;
+        mac |= (dev.maclocal[4] as u32) << 8;
+        mac |= (dev.maclocal[5]) as u32;
         device_set_config_mac(b"mac\0".as_ptr() as _, mac as i32);
     } else {
-        (*dev).maclocal[3] = ((mac >> 16) & 0xff) as u8;
-        (*dev).maclocal[4] = ((mac >> 8) & 0xff) as u8;
-        (*dev).maclocal[5] = (mac & 0xff) as u8;
+        dev.maclocal[3] = ((mac >> 16) & 0xff) as u8;
+        dev.maclocal[4] = ((mac >> 8) & 0xff) as u8;
+        dev.maclocal[5] = (mac & 0xff) as u8;
     }
 
-    (*dev).dp8390 = device_add(&dp8390_device) as _;
-    (*(*dev).dp8390).r#priv = dev as _;
-    (*(*dev).dp8390).interrupt = Some(nic_interrupt);
+    dev.dp8390 = device_add(&dp8390_device) as _;
+    (*dev.dp8390).r#priv = &mut *dev as *mut _ as _;
+    (*dev.dp8390).interrupt = Some(nic_interrupt);
 
-    match (*dev).board {
+    match dev.board {
         NE2K_NE1000 => {
-            (*dev).maclocal[0] = 0x00; /* 00:00:D8 (Novell OID) */
-            (*dev).maclocal[1] = 0x00;
-            (*dev).maclocal[2] = 0xD8;
-            (*dev).is_8bit = 1;
+            dev.maclocal[0] = 0x00; /* 00:00:D8 (Novell OID) */
+            dev.maclocal[1] = 0x00;
+            dev.maclocal[2] = 0xD8;
+            dev.is_8bit = true;
             nic_rom = ptr::null_mut();
             dp8390_set_defaults(
-                (*dev).dp8390,
+                dev.dp8390,
                 DP8390_FLAG_CHECK_CR as u8 | DP8390_FLAG_CLEAR_IRQ as u8,
             );
-            dp8390_mem_alloc((*dev).dp8390, 0x2000, 0x2000);
+            dp8390_mem_alloc(dev.dp8390, 0x2000, 0x2000);
         }
 
         NE2K_NE2000 => {
-            (*dev).maclocal[0] = 0x00; /* 00:00:D8 (Novell OID) */
-            (*dev).maclocal[1] = 0x00;
-            (*dev).maclocal[2] = 0xD8;
+            dev.maclocal[0] = 0x00; /* 00:00:D8 (Novell OID) */
+            dev.maclocal[1] = 0x00;
+            dev.maclocal[2] = 0xD8;
             nic_rom = ROM_PATH_NE2000.as_ptr() as _;
             dp8390_set_defaults(
-                (*dev).dp8390,
+                dev.dp8390,
                 DP8390_FLAG_EVEN_MAC as u8
                     | DP8390_FLAG_CHECK_CR as u8
                     | DP8390_FLAG_CLEAR_IRQ as u8,
             );
-            dp8390_mem_alloc((*dev).dp8390, 0x4000, 0x4000);
+            dp8390_mem_alloc(dev.dp8390, 0x4000, 0x4000);
         }
 
         NE2K_ETHERNEXT_MC => {
-            (*dev).maclocal[0] = 0x00; /* 00:00:D8 (Networth Inc. OID) */
-            (*dev).maclocal[1] = 0x00;
-            (*dev).maclocal[2] = 0x79;
-            (*dev).pos_regs[0] = 0x1F;
-            (*dev).pos_regs[1] = 0x61;
+            dev.maclocal[0] = 0x00; /* 00:00:D8 (Networth Inc. OID) */
+            dev.maclocal[1] = 0x00;
+            dev.maclocal[2] = 0x79;
+            dev.pos_regs[0] = 0x1F;
+            dev.pos_regs[1] = 0x61;
             nic_rom = ptr::null_mut();
             dp8390_set_defaults(
-                (*dev).dp8390,
+                dev.dp8390,
                 DP8390_FLAG_EVEN_MAC as u8
                     | DP8390_FLAG_CHECK_CR as u8
                     | DP8390_FLAG_CLEAR_IRQ as u8,
             );
-            dp8390_mem_alloc((*dev).dp8390, 0x4000, 0x4000);
+            dp8390_mem_alloc(dev.dp8390, 0x4000, 0x4000);
         }
 
         NE2K_RTL8019AS | NE2K_RTL8029AS => {
-            (*dev).is_pci = if (*dev).board == NE2K_RTL8029AS { 1 } else { 0 };
-            (*dev).maclocal[0] = 0x00; /* 00:E0:4C (Realtek OID) */
-            (*dev).maclocal[1] = 0xE0;
-            (*dev).maclocal[2] = 0x4C;
-            nic_rom = if (*dev).board == NE2K_RTL8019AS {
+            dev.is_pci = dev.board == NE2K_RTL8029AS;
+            dev.maclocal[0] = 0x00; /* 00:E0:4C (Realtek OID) */
+            dev.maclocal[1] = 0xE0;
+            dev.maclocal[2] = 0x4C;
+            nic_rom = if dev.board == NE2K_RTL8019AS {
                 ROM_PATH_RTL8019.as_ptr() as _
             } else {
                 ROM_PATH_RTL8029.as_ptr() as _
             };
-            if ((*dev).is_pci) != 0 {
-                dp8390_set_defaults((*dev).dp8390, DP8390_FLAG_EVEN_MAC);
+            if dev.is_pci {
+                dp8390_set_defaults(dev.dp8390, DP8390_FLAG_EVEN_MAC);
             } else {
-                dp8390_set_defaults((*dev).dp8390, DP8390_FLAG_EVEN_MAC | DP8390_FLAG_CLEAR_IRQ);
+                dp8390_set_defaults(dev.dp8390, DP8390_FLAG_EVEN_MAC | DP8390_FLAG_CLEAR_IRQ);
             }
             dp8390_set_id(
-                (*dev).dp8390,
+                dev.dp8390,
                 0x50,
-                if (*dev).board == NE2K_RTL8019AS {
+                if dev.board == NE2K_RTL8019AS {
                     0x70
                 } else {
                     0x43
                 },
             );
-            dp8390_mem_alloc((*dev).dp8390, 0x4000, 0x8000);
+            dp8390_mem_alloc(dev.dp8390, 0x4000, 0x8000);
         }
         board => {
             warn!("net_ne2000: Unknown dev->board value {}", board);
         }
     }
 
-    memcpy(
-        (*(*dev).dp8390).physaddr.as_mut_ptr() as _,
-        (*dev).maclocal.as_ptr() as _,
-        size_of_val(&(*dev).maclocal),
-    );
+    (*dev.dp8390).physaddr.copy_from_slice(&dev.maclocal);
 
     trace!(
         "{:?}: I/O={:x}, IRQ={}, MAC={:x}:{:x}:{:x}:{:x}:{:x}:{:x}",
-        CStr::from_ptr((*dev).name),
-        (*dev).base_address,
-        (*dev).base_irq,
-        (*(*dev).dp8390).physaddr[0],
-        (*(*dev).dp8390).physaddr[1],
-        (*(*dev).dp8390).physaddr[2],
-        (*(*dev).dp8390).physaddr[3],
-        (*(*dev).dp8390).physaddr[4],
-        (*(*dev).dp8390).physaddr[5],
+        CStr::from_ptr(dev.name),
+        dev.base_address,
+        dev.base_irq,
+        (*dev.dp8390).physaddr[0],
+        (*dev.dp8390).physaddr[1],
+        (*dev.dp8390).physaddr[2],
+        (*dev.dp8390).physaddr[3],
+        (*dev.dp8390).physaddr[4],
+        (*dev.dp8390).physaddr[5],
     );
 
     /*
      * Make this device known to the I/O system.
      * PnP and PCI devices start with address spaces inactive.
      */
-    if (*dev).board < NE2K_RTL8019AS && (*dev).board != NE2K_ETHERNEXT_MC {
-        nic_ioset(dev, (*dev).base_address as u16);
+    if dev.board < NE2K_RTL8019AS && dev.board != NE2K_ETHERNEXT_MC {
+        nic_ioset(&mut *dev, dev.base_address as u16);
     }
 
     /* Set up our BIOS ROM space, if any. */
-    nic_rom_init(dev, nic_rom as *mut _);
+    nic_rom_init(&mut *dev, nic_rom as *mut _);
 
-    if (*dev).board >= NE2K_RTL8019AS {
-        if ((*dev).is_pci) != 0 {
+    if dev.board >= NE2K_RTL8019AS {
+        if dev.is_pci {
             /*
              * Configure the PCI space registers.
              *
              * We do this here, so the I/O routines are generic.
              */
-            memset((*dev).pci_regs.as_mut_ptr() as _, 0, PCI_REGSIZE);
+            dev.pci_regs.fill(0);
 
-            (*dev).pci_regs[0x00] = (PCI_VENDID & 0xff) as u8;
-            (*dev).pci_regs[0x01] = (PCI_VENDID >> 8) as u8;
-            (*dev).pci_regs[0x02] = (PCI_DEVID & 0xff) as u8;
-            (*dev).pci_regs[0x03] = (PCI_DEVID >> 8) as u8;
+            dev.pci_regs[0x00] = (PCI_VENDID & 0xff) as u8;
+            dev.pci_regs[0x01] = (PCI_VENDID >> 8) as u8;
+            dev.pci_regs[0x02] = (PCI_DEVID & 0xff) as u8;
+            dev.pci_regs[0x03] = (PCI_DEVID >> 8) as u8;
 
-            (*dev).pci_regs[0x04] = 0x03; /* IOEN */
-            (*dev).pci_regs[0x05] = 0x00;
-            (*dev).pci_regs[0x07] = 0x02; /* DST0, medium devsel */
+            dev.pci_regs[0x04] = 0x03; /* IOEN */
+            dev.pci_regs[0x05] = 0x00;
+            dev.pci_regs[0x07] = 0x02; /* DST0, medium devsel */
 
-            (*dev).pci_regs[0x09] = 0x00; /* PIFR */
+            dev.pci_regs[0x09] = 0x00; /* PIFR */
 
-            (*dev).pci_regs[0x0B] = 0x02; /* BCR: Network Controller */
-            (*dev).pci_regs[0x0A] = 0x00; /* SCR: Ethernet */
+            dev.pci_regs[0x0B] = 0x02; /* BCR: Network Controller */
+            dev.pci_regs[0x0A] = 0x00; /* SCR: Ethernet */
 
-            (*dev).pci_regs[0x2C] = (PCI_VENDID & 0xff) as u8;
-            (*dev).pci_regs[0x2D] = (PCI_VENDID >> 8) as u8;
-            (*dev).pci_regs[0x2E] = (PCI_DEVID & 0xff) as u8;
-            (*dev).pci_regs[0x2F] = (PCI_DEVID >> 8) as u8;
+            dev.pci_regs[0x2C] = (PCI_VENDID & 0xff) as u8;
+            dev.pci_regs[0x2D] = (PCI_VENDID >> 8) as u8;
+            dev.pci_regs[0x2E] = (PCI_DEVID & 0xff) as u8;
+            dev.pci_regs[0x2F] = (PCI_DEVID >> 8) as u8;
 
-            (*dev).pci_regs[0x3D] = PCI_INTA; /* PCI_IPR */
+            dev.pci_regs[0x3D] = PCI_INTA; /* PCI_IPR */
 
             /* Enable our address space in PCI. */
-            (*dev).pci_bar[0].addr_regs.as_mut()[0] = 0x01;
+            dev.pci_bar[0].addr_regs.as_mut()[0] = 0x01;
 
             /* Enable our BIOS space in PCI, if needed. */
-            if (*dev).bios_addr > 0 {
-                *(*dev).pci_bar[1].addr.as_mut() = 0xFFFF8000;
-                (*dev).pci_bar[1].addr_regs.as_mut()[1] = (*dev).bios_mask as u8;
+            if dev.bios_addr > 0 {
+                *dev.pci_bar[1].addr.as_mut() = 0xFFFF8000;
+                dev.pci_bar[1].addr_regs.as_mut()[1] = dev.bios_mask as u8;
             } else {
-                *(*dev).pci_bar[1].addr.as_mut() = 0;
-                (*dev).bios_size = 0;
+                *dev.pci_bar[1].addr.as_mut() = 0;
+                dev.bios_size = 0;
             }
 
-            mem_mapping_disable(&mut (*dev).bios_rom.mapping);
+            mem_mapping_disable(&mut dev.bios_rom.mapping);
 
             /* Add device to the PCI bus, keep its slot number. */
-            (*dev).card = pci_add_card(
+            dev.card = pci_add_card(
                 PCI_ADD_NORMAL as u8,
                 Some(nic_pci_read),
                 Some(nic_pci_write),
-                dev as _,
+                &mut *dev as *mut _ as _,
             ) as i32;
         }
 
         /* Initialize the RTL8029 EEPROM. */
-        memset(
-            (*dev).eeprom.as_mut_ptr() as _,
-            0x00,
-            size_of_val(&(*dev).eeprom),
-        );
+        dev.eeprom.fill(0);
 
-        if (*dev).board == NE2K_RTL8029AS {
-            memcpy(
-                (*dev).eeprom.as_mut_ptr().offset(0x02) as _,
-                (*dev).maclocal.as_ptr() as _,
-                6,
-            );
-
-            (*dev).eeprom[0x76] = (PCI_DEVID & 0xff) as u8;
-            (*dev).eeprom[0x7A] = (PCI_DEVID & 0xff) as u8;
-            (*dev).eeprom[0x7E] = (PCI_DEVID & 0xff) as u8;
-            (*dev).eeprom[0x77] = (PCI_DEVID >> 8) as u8;
-            (*dev).eeprom[0x7B] = (PCI_DEVID >> 8) as u8;
-            (*dev).eeprom[0x7F] = (PCI_DEVID >> 8) as u8;
-            (*dev).eeprom[0x78] = (PCI_VENDID & 0xff) as u8;
-            (*dev).eeprom[0x7C] = (PCI_VENDID & 0xff) as u8;
-            (*dev).eeprom[0x79] = (PCI_VENDID >> 8) as u8;
-            (*dev).eeprom[0x7D] = (PCI_VENDID >> 8) as u8;
+        if dev.board == NE2K_RTL8029AS {
+            dev.eeprom[0x02..].copy_from_slice(&dev.maclocal);
+            dev.eeprom[0x76] = (PCI_DEVID & 0xff) as u8;
+            dev.eeprom[0x7A] = (PCI_DEVID & 0xff) as u8;
+            dev.eeprom[0x7E] = (PCI_DEVID & 0xff) as u8;
+            dev.eeprom[0x77] = (PCI_DEVID >> 8) as u8;
+            dev.eeprom[0x7B] = (PCI_DEVID >> 8) as u8;
+            dev.eeprom[0x7F] = (PCI_DEVID >> 8) as u8;
+            dev.eeprom[0x78] = (PCI_VENDID & 0xff) as u8;
+            dev.eeprom[0x7C] = (PCI_VENDID & 0xff) as u8;
+            dev.eeprom[0x79] = (PCI_VENDID >> 8) as u8;
+            dev.eeprom[0x7D] = (PCI_VENDID >> 8) as u8;
         } else {
-            memcpy(
-                (*dev).eeprom.as_mut_ptr().offset(0x12) as _,
-                rtl8019as_pnp_rom.as_ptr() as _,
-                rtl8019as_pnp_rom.len(),
-            );
+            dev.eeprom[0x12..].copy_from_slice(&rtl8019as_pnp_rom);
 
-            (*dev).pnp_card = isapnp_add_card(
-                (*dev).eeprom.as_mut_ptr().offset(0x12) as _,
+            dev.pnp_card = isapnp_add_card(
+                dev.eeprom.as_mut_ptr().offset(0x12) as _,
                 rtl8019as_pnp_rom.len() as u16,
                 Some(nic_pnp_config_changed),
                 Some(nic_pnp_csn_changed),
                 Some(nic_pnp_read_vendor_reg),
                 Some(nic_pnp_write_vendor_reg),
-                dev as _,
+                &mut *dev as *mut _ as _,
             );
         }
     }
 
-    if (*dev).board != NE2K_ETHERNEXT_MC {
+    if dev.board != NE2K_ETHERNEXT_MC {
         /* Reset the board. */
-        nic_reset(dev as _);
+        nic_reset(&mut *dev as *mut _ as _);
     }
 
     /* Attach ourselves to the network module. */
     network_attach(
-        (*dev).dp8390 as _,
-        (*(*dev).dp8390).physaddr.as_mut_ptr(),
+        dev.dp8390 as _,
+        (*dev.dp8390).physaddr.as_mut_ptr(),
         Some(dp8390_rx),
         None,
         None,
@@ -1335,21 +1311,21 @@ unsafe extern "C" fn nic_init(info: *const device_t) -> *mut c_void {
 
     trace!(
         "{:?}: {} attached IO=0x{:x} IRQ={}",
-        CStr::from_ptr((*dev).name),
-        if (*dev).is_pci != 0 { "PCI" } else { "ISA" },
-        (*dev).base_address,
-        (*dev).base_irq
+        CStr::from_ptr(dev.name),
+        if dev.is_pci { "PCI" } else { "ISA" },
+        dev.base_address,
+        dev.base_irq
     );
 
-    return (dev) as _;
+    return Box::into_raw(dev) as _;
 }
 
 unsafe extern "C" fn nic_close(r#priv: *mut c_void) {
-    let dev: *mut nic_t = r#priv as _;
+    let dev = Box::from_raw(r#priv as *mut nic_t);
 
-    trace!("{:?}: closed", CStr::from_ptr((*dev).name));
+    trace!("{:?}: closed", CStr::from_ptr(dev.name));
 
-    free(dev as _);
+    drop(dev);
 }
 
 static ne1000_config: [device_config_t; 4] = [
