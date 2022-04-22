@@ -329,7 +329,9 @@ unsafe fn asic_write(dev: *mut nic_t, off: u32, val: u32, len: c_uint) {
                 if len == 4 {
                     (*(*dev).dp8390).remote_bytes -= len as u16;
                 } else {
-                    (*(*dev).dp8390).remote_bytes -= ((*(*dev).dp8390).DCR.wdsize + 1) as u16;
+                    (*(*dev).dp8390).remote_bytes = (*(*dev).dp8390)
+                        .remote_bytes
+                        .saturating_sub(((*(*dev).dp8390).DCR.wdsize + 1) as u16);
                 }
 
                 if (*(*dev).dp8390).remote_bytes > (*(*dev).dp8390).mem_size as u16 {
@@ -468,7 +470,7 @@ unsafe fn page3_write(dev: *mut nic_t, off: u32, val: u32, len: c_uint) {
 
 unsafe fn nic_read(dev: *mut nic_t, addr: u32, len: c_uint) -> u32 {
     let mut retval = 0;
-    let off: c_int = addr as c_int - (*dev).base_address as c_int;
+    let off = addr - (*dev).base_address;
 
     trace!(
         "{:?}: read addr {}, len {}",
@@ -478,22 +480,22 @@ unsafe fn nic_read(dev: *mut nic_t, addr: u32, len: c_uint) -> u32 {
     );
 
     if off >= 0x10 {
-        retval = asic_read(dev, off as u32 - 0x10, len);
+        retval = asic_read(dev, off - 0x10, len);
     } else if off == 0x00 {
         retval = dp8390_read_cr((*dev).dp8390);
     } else {
         match (*(*dev).dp8390).CR.pgsel {
             0x00 => {
-                retval = dp8390_page0_read((*dev).dp8390, off as u32, len);
+                retval = dp8390_page0_read((*dev).dp8390, off, len);
             }
             0x01 => {
-                retval = dp8390_page1_read((*dev).dp8390, off as u32, len);
+                retval = dp8390_page1_read((*dev).dp8390, off, len);
             }
             0x02 => {
-                retval = dp8390_page2_read((*dev).dp8390, off as u32, len);
+                retval = dp8390_page2_read((*dev).dp8390, off, len);
             }
             0x03 => {
-                retval = page3_read(dev, off as u32, len);
+                retval = page3_read(dev, off, len);
             }
             _ => {
                 warn!(
@@ -521,7 +523,7 @@ unsafe extern "C" fn nic_readl(addr: u16, r#priv: *mut c_void) -> u32 {
 }
 
 unsafe fn nic_write(dev: *mut nic_t, addr: u32, val: u32, len: c_uint) {
-    let off: c_int = addr as c_int - (*dev).base_address as c_int;
+    let off = addr - (*dev).base_address;
 
     trace!(
         "{:?}: write addr {}, value {} len {}",
@@ -536,22 +538,22 @@ unsafe fn nic_write(dev: *mut nic_t, addr: u32, val: u32, len: c_uint) {
     page being selected by the PS0,PS1 registers in the
     command register */
     if off >= 0x10 {
-        asic_write(dev, off as u32 - 0x10, val, len);
+        asic_write(dev, off - 0x10, val, len);
     } else if off == 0x00 {
         dp8390_write_cr((*dev).dp8390, val);
     } else {
         match (*(*dev).dp8390).CR.pgsel {
             0x00 => {
-                dp8390_page0_write((*dev).dp8390, off as u32, val, len);
+                dp8390_page0_write((*dev).dp8390, off, val, len);
             }
             0x01 => {
-                dp8390_page1_write((*dev).dp8390, off as u32, val, len);
+                dp8390_page1_write((*dev).dp8390, off, val, len);
             }
             0x02 => {
-                dp8390_page2_write((*dev).dp8390, off as u32, val, len);
+                dp8390_page2_write((*dev).dp8390, off, val, len);
             }
             0x03 => {
-                page3_write(dev, off as u32, val, len);
+                page3_write(dev, off, val, len);
             }
             _ => {
                 warn!(
