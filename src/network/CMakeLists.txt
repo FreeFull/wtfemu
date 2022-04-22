@@ -13,7 +13,7 @@
 #           Copyright 2020,2021 David Hrdlička.
 #
 
-add_library(net OBJECT net_pcap.c net_3c503.c
+add_library(net OBJECT net_pcap.c
     net_wd8003.c net_plip.c)
 
 if (HAIKU)
