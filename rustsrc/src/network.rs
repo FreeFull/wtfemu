@@ -244,6 +244,7 @@ pub unsafe extern "C" fn network_wait(wait: u8) {
 #[no_mangle]
 pub unsafe extern "C" fn network_init() {
     let i;
+    let _ = env_logger::try_init();
 
     /* Initialize to a known state. */
     network_type.store(NET_TYPE_NONE, Ordering::SeqCst);
