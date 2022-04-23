@@ -16,8 +16,12 @@ use once_cell::sync::Lazy;
 pub mod net_slirp;
 pub use net_slirp::*;
 pub mod net_3c503;
+use net_3c503::*;
 pub mod net_dp8390;
 pub mod net_ne2000;
+use net_ne2000::*;
+pub mod net_wd8003;
+use net_wd8003::*;
 
 // network.h
 
@@ -137,36 +141,25 @@ const net_none_device: device_t = device_t {
 };
 
 extern "C" {
-    pub static threec503_device: device_t;
-    pub static ne1000_device: device_t;
-    pub static ne2000_device: device_t;
-    pub static rtl8019as_device: device_t;
-    pub static wd8003e_device: device_t;
-    pub static wd8003eb_device: device_t;
-    pub static wd8013ebt_device: device_t;
     pub static plip_device: device_t;
-    pub static ethernext_mc_device: device_t;
-    pub static wd8003eta_device: device_t;
-    pub static wd8003ea_device: device_t;
-    pub static rtl8029as_device: device_t;
 }
 
 static net_cards: Lazy<[Arc<Mutex<netcard_t>>; 14]> = Lazy::new(|| {
     [
         // clang-format off
         netcard_t::new(&net_none_device),
-        netcard_t::new(unsafe { &threec503_device }),
-        netcard_t::new(unsafe { &ne1000_device }),
-        netcard_t::new(unsafe { &ne2000_device }),
-        netcard_t::new(unsafe { &rtl8019as_device }),
-        netcard_t::new(unsafe { &wd8003e_device }),
-        netcard_t::new(unsafe { &wd8003eb_device }),
-        netcard_t::new(unsafe { &wd8013ebt_device }),
+        netcard_t::new(&threec503_device),
+        netcard_t::new(&ne1000_device),
+        netcard_t::new(&ne2000_device),
+        netcard_t::new(&rtl8019as_device),
+        netcard_t::new(&wd8003e_device),
+        netcard_t::new(&wd8003eb_device),
+        netcard_t::new(&wd8013ebt_device),
         netcard_t::new(unsafe { &plip_device }),
-        netcard_t::new(unsafe { &ethernext_mc_device }),
-        netcard_t::new(unsafe { &wd8003eta_device }),
-        netcard_t::new(unsafe { &wd8003ea_device }),
-        netcard_t::new(unsafe { &rtl8029as_device }),
+        netcard_t::new(&ethernext_mc_device),
+        netcard_t::new(&wd8003eta_device),
+        netcard_t::new(&wd8003ea_device),
+        netcard_t::new(&rtl8029as_device),
         netcard_t::new(ptr::null()), // clang-format off
     ]
 });
@@ -266,26 +259,6 @@ pub unsafe extern "C" fn network_init() {
     if i > 0 {
         network_ndev.fetch_add(i, Ordering::SeqCst);
     }
-    /* // todo
-    #ifdef ENABLE_NETWORK_LOG
-        /* Start packet dump. */
-        network_dump = fopen("network.pcap", "wb");
-
-        struct {
-            uint32_t magic_number;
-            uint16_t version_major, version_minor;
-            int32_t         thiszone;
-            uint32_t sigfigs, snaplen, network;
-        } pcap_hdr = {
-            0xa1b2c3d4,
-            2, 4,
-            0,
-            0, 65535, 1
-        };
-        fwrite(&pcap_hdr, sizeof(pcap_hdr), 1, network_dump);
-        fflush(network_dump);
-    #endif
-    */
 }
 
 #[no_mangle]

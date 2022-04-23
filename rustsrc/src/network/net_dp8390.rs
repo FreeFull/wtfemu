@@ -586,7 +586,7 @@ unsafe extern "C" fn dp8390_rx_common(
         memcpy(
             startptr as _,
             buf.offset(endbytes as isize - size_of_val(&pkthdr) as isize) as _,
-            io_len as usize - endbytes as usize + 8,
+            io_len as usize + 8 - endbytes as usize,
         );
     }
     (*dev).curr_page = nextpage as u8;
